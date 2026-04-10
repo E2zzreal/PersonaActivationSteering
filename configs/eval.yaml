@@ -1,0 +1,46 @@
+# PersonaSteer 评估配置
+
+# 模型配置
+model:
+  checkpoint: "checkpoints/stage3/best.pt"
+  inject_layers: [14, 15, 16, 17, 18, 19, 20, 21]
+  v_dim: 1024
+  hidden_dim: 4096
+  layer_dim: 2560
+
+# 数据配置
+data:
+  tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+  eval_path: "data/processed/eval.jsonl"
+  max_turns: 6
+  batch_size: 4
+
+# 自动指标评估配置
+auto_metrics:
+  enabled: true
+  compute_ppl: true
+  compute_v_variance: true
+  compute_gate_distribution: true
+
+# LLM Judge 评估配置
+llm_judge:
+  enabled: true
+  # 多模型评估
+  judge_models:
+    - "GPT-5"
+    - "Claude-Sonnet-4.5"
+  num_samples: 500
+  max_new_tokens: 128
+  temperature: 0.7
+
+  # Baseline 对比
+  baseline_scores_path: null  # 可选，用于计算 N-IR
+
+# 输出配置
+output:
+  results_path: "experiments/eval_results.json"
+  report_path: "experiments/eval_report.md"
+
+# 设备配置
+device: "cuda"
+seed: 42

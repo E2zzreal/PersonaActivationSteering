@@ -1,0 +1,65 @@
+# PersonaSteer Stage 1 训练配置
+# 仅训练 HyperNetwork，gate 冻结
+
+# 模型配置
+model:
+  # 注入层配置 (Probing推荐: [10-17])
+  inject_layers: [10, 11, 12, 13, 14, 15, 16, 17]
+  v_dim: 1024
+  hidden_dim: 4096
+  layer_dim: 2048  # Qwen2.5-3B hidden_size
+  v_norm_clip: null  # 【方案B】禁用hard clip，改用soft constraint
+  v_norm_weight: 0.01  # 【方案B】v_norm正则化权重
+  v_norm_target: 32.0  # 【方案B】目标v_norm值，与LayerNorm自然输出匹配(√v_dim=√1024=32)
+  num_inject_layers: 8  # 【方案D】注入层数量
+  use_layer_embedding: true  # 【方案D】使用层嵌入
+
+# 模型路径
+base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen2___5-3B
+
+# 数据配置
+data:
+  tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen2___5-3B
+  train_path: data/split/train.jsonl  # 【更新】使用新划分的训练集
+  eval_path: data/split/val.jsonl     # 【更新】使用新划分的验证集
+  max_turns: 6
+  batch_size: 2
+  num_workers: 2
+
+# 训练配置
+training:
+  # 阶段标识 (1: 仅 HyperNetwork, 2: 联合训练, 3: +对比学习)
+  stage: 1
+
+  # 训练参数
+  num_epochs: 4
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+
+  # 损失权重
+  sft_weight: 1.0
+  scl_weight: 0.0  # Stage 1 不使用对比损失
+  temperature: 0.07
+
+  # 优化器
+  warmup_steps: 100
+
+  # 混合精度
+  use_amp: true
+
+  # Checkpoint 保存
+  output_dir: checkpoints/stage1
+  save_interval: 1
+
+  # 日志
+  log_interval: 10
+
+  # 双loss训练配置
+  use_dual_loss: true
+  injected_loss_weight: 0.5
+
+# 设备配置
+device: cuda:0  # 使用GPU 0
+seed: 42
+debug: false

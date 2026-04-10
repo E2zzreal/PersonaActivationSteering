@@ -1,0 +1,20 @@
+{
+  "config": {
+    "model": "./Qwen/Qwen2___5-3B",
+    "num_samples": 100,
+    "top_k": 8,
+    "device": "cuda:0"
+  },
+  "selected_layers": {
+    "top": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "continuous": [
+      

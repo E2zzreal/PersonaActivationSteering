@@ -1,0 +1,78 @@
+# PersonaSteer Stage 2 训练配置 - Qwen3-4B
+# 解冻 gate，联合训练 HyperNetwork + Gate
+
+# 模型配置
+model:
+  # 注入层配置 (真实Probing推荐: [0-7] - 模型前部层)
+  inject_layers: [8, 9, 10, 11, 12, 13, 14, 15]
+  v_dim: 1024
+  hidden_dim: 4096
+  layer_dim: 2560  # Qwen3-4B hidden_size
+  v_norm_weight: 0.01
+  v_norm_target: 32.0
+  num_inject_layers: 8
+  use_layer_embedding: true
+
+# 模型路径
+base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+
+# Stage 1 checkpoint
+stage1_checkpoint: checkpoints/stage1_qwen3/best.pt
+
+# 数据配置
+data:
+  tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+  train_path: data/split/train.jsonl
+  eval_path: data/split/val.jsonl
+  max_turns: 6
+  batch_size: 1
+  num_workers: 2
+
+# 训练配置
+training:
+  # 阶段标识 (1: 仅 HyperNetwork, 2: 联合训练, 3: +对比学习)
+  stage: 2
+
+  # 训练参数
+  num_epochs: 4
+  learning_rate: 0.00005  # 较低的学习率用于联合训练
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+
+  # 损失权重
+  sft_weight: 1.0
+  scl_weight: 0.1          # 修改: 0.0 → 0.1
+  temperature: 0.07
+
+  # Gate约束 - 降低初始gate强度，让gate从小值开始学习
+  gate_min_value: 0.0   # 不强制gate最小值
+  gate_reg_weight: 0.05  # 轻微正则化，防止gate过大
+  gate_max: 1.0          # 允许gate学习到更高值
+  gate_init_bias: -2.0   # 初始化bias=-2，sigmoid后≈0.12
+
+  # v_norm约束
+  v_norm_weight: 0.1        # 新增
+  v_norm_target: 5.0       # 新增
+
+  # 优化器
+  warmup_steps: 50
+
+  # 混合精度
+  use_amp: true
+
+  # Checkpoint 保存
+  output_dir: checkpoints/exp_gate_reg_0.05_lr5e5  # 修改
+  save_interval: 1
+
+  # 日志
+  log_interval: 10
+
+  # 双loss训练配置
+  use_dual_loss: false      # 修改: true → false（设计有缺陷）
+  injected_loss_weight: 0.5
+
+# 设备配置
+device: cuda:2
+seed: 42
+debug: false
+

@@ -1,0 +1,40 @@
+# Probing 实验配置
+# Layer x Head 粒度分析，确定最优注入层
+
+# 模型配置
+model:
+  name: "Qwen/Qwen3-4B"
+  torch_dtype: "float16"
+
+# 数据配置
+data:
+  path: "data/processed/train.jsonl"
+  num_samples: 1000
+  batch_size: 4
+  max_length: 512
+
+# 属性配置
+attributes:
+  - age
+  - gender
+  - introversion
+  - openness
+  - conscientiousness
+  - agreeableness
+  - neuroticism
+
+# 层选择配置
+selection:
+  top_k: 8
+  strategy: "continuous"  # "top" or "continuous"
+
+# 输出配置
+output:
+  results_path: "experiments/probing/results_qwen3.json"
+  heatmap_dir: "experiments/probing/heatmaps_qwen3"
+  config_path: "experiments/probing/selected_layers_qwen3.yaml"
+
+# 设备配置
+device: "cuda:2"
+seed: 42
+debug: false

@@ -1,0 +1,52 @@
+# PersonaSteer Stage 2 训练配置 - Qwen3-4B (关闭dual_loss)
+# 解冻 gate，联合训练 HyperNetwork + Gate
+# 关闭dual_loss以解决OOM
+
+# 模型配置 (与Stage1一致)
+model:
+  inject_layers: [12, 13, 14, 15]
+  v_dim: 1024
+  hidden_dim: 4096
+  layer_dim: 2560
+  v_norm_weight: 0.01
+  v_norm_target: 32.0
+  num_inject_layers: 4
+  use_layer_embedding: true
+
+# 模型路径
+base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+
+# Stage 1 checkpoint
+stage1_checkpoint: checkpoints/stage1_qwen3/best.pt
+
+# 数据配置
+data:
+  tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+  train_path: data/split/train.jsonl
+  eval_path: data/split/val.jsonl
+  max_turns: 2
+  batch_size: 1
+  num_workers: 2
+
+# 训练配置
+training:
+  stage: 2
+  num_epochs: 4
+  learning_rate: 0.00005
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  sft_weight: 1.0
+  scl_weight: 0.0
+  temperature: 0.07
+  warmup_steps: 50
+  use_amp: false
+  output_dir: checkpoints/v4_qwen3_stage2
+  save_interval: 1
+  log_interval: 10
+  use_dual_loss: false
+  injected_loss_weight: 0.5
+
+# 设备配置
+device: cuda:0
+seed: 42
+debug: false

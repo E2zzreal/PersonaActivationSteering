@@ -1,0 +1,29 @@
+# PersonaSteer 模型配置
+# 包含骨干模型、编码器和超网络配置
+
+model:
+  # 骨干模型配置
+  backbone:
+    name: "Qwen/Qwen3-4B"
+    torch_dtype: "bfloat16"
+    freeze: true
+
+  # 编码器配置
+  encoder:
+    name: "Qwen/Qwen3-Embedding"
+    dim: 1024
+    freeze: true
+
+  # 超网络配置
+  hyper_network:
+    v_dim: 1024
+    hidden_dim: 4096
+    num_residual_layers: 3
+    dropout: 0.1
+
+  # 注入配置
+  injection:
+    # 注入层索引列表 (从 probing 实验获得)
+    inject_layers: [14, 15, 16, 17, 18, 19, 20, 21]
+    layer_dim: 2560
+    gate_hidden_dim: 256

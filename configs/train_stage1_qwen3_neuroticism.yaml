@@ -1,0 +1,54 @@
+# PersonaSteer Stage 1 训练配置 - Qwen3-4B (车机助手专用)
+# 方案C - 特质分离配置: 目标=神经质(稳定性)
+#
+# 车机助手场景: 稳定性最重要
+# 目标: 降低神经质，让助手保持情绪稳定
+# 注入层: 峰值层10 ±1 = [9, 10, 11]
+
+# 模型配置
+model:
+  # 神经质专用配置 (3层)
+  inject_layers: [9, 10, 11]
+  v_dim: 1024
+  hidden_dim: 4096
+  layer_dim: 2560
+  v_norm_clip: null
+  v_norm_weight: 0.01
+  v_norm_target: 32.0
+  num_inject_layers: 3  # 最精简，专注单一特质
+  use_layer_embedding: true
+
+# 模型路径
+base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+
+# 数据配置
+data:
+  tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+  train_path: data/split/train.jsonl
+  eval_path: data/split/val.jsonl
+  max_turns: 6
+  batch_size: 1
+  num_workers: 2
+
+# 训练配置
+training:
+  stage: 1
+  num_epochs: 4
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  sft_weight: 1.0
+  scl_weight: 0.0
+  temperature: 0.07
+  warmup_steps: 100
+  use_amp: true
+  output_dir: checkpoints/stage1_qwen3_neuroticism
+  save_interval: 1
+  log_interval: 10
+  use_dual_loss: false
+  injected_loss_weight: 0.5
+
+# 设备配置
+device: cuda:1
+seed: 42
+debug: false

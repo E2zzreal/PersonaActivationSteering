@@ -1,0 +1,93 @@
+{
+  "age": {
+    "max_correlation": NaN,
+    "min_correlation": NaN,
+    "mean_abs_correlation": NaN,
+    "std_correlation": NaN,
+    "peak_layer": 0,
+    "peak_layer_correlation": NaN,
+    "top_3_layers": [
+      15,
+      16,
+      17
+    ]
+  },
+  "gender": {
+    "max_correlation": 0.3358292281627655,
+    "min_correlation": -0.29839086532592773,
+    "mean_abs_correlation": 0.10241898894309998,
+    "std_correlation": 0.12601152062416077,
+    "peak_layer": 20,
+    "peak_layer_correlation": 0.14198225736618042,
+    "top_3_layers": [
+      5,
+      17,
+      20
+    ]
+  },
+  "introversion": {
+    "max_correlation": 0.34013286232948303,
+    "min_correlation": -0.3707089126110077,
+    "mean_abs_correlation": 0.08866230398416519,
+    "std_correlation": 0.1117609366774559,
+    "peak_layer": 7,
+    "peak_layer_correlation": 0.16972242295742035,
+    "top_3_layers": [
+      2,
+      7,
+      11
+    ]
+  },
+  "openness": {
+    "max_correlation": 0.2977447211742401,
+    "min_correlation": -0.32096508145332336,
+    "mean_abs_correlation": 0.07137368619441986,
+    "std_correlation": 0.09012625366449356,
+    "peak_layer": 7,
+    "peak_layer_correlation": 0.1147908866405487,
+    "top_3_layers": [
+      2,
+      7,
+      27
+    ]
+  },
+  "conscientiousness": {
+    "max_correlation": 0.3787607252597809,
+    "min_correlation": -0.30485618114471436,
+    "mean_abs_correlation": 0.08256521821022034,
+    "std_correlation": 0.10371751338243484,
+    "peak_layer": 12,
+    "peak_layer_correlation": 0.1283225119113922,
+    "top_3_layers": [
+      12,
+      17,
+      25
+    ]
+  },
+  "agreeableness": {
+    "max_correlation": 0.2614757716655731,
+    "min_correlation": -0.2519386410713196,
+    "mean_abs_correlation": 0.06956073641777039,
+    "std_correlation": 0.08795958012342453,
+    "peak_layer": 31,
+    "peak_layer_correlation": 0.10719314217567444,
+    "top_3_layers": [
+      20,
+      30,
+      31
+    ]
+  },
+  "neuroticism": {
+    "max_correlation": 0.33538058400154114,
+    "min_correlation": -0.3576762080192566,
+    "mean_abs_correlation": 0.0839819461107254,
+    "std_correlation": 0.10629089921712875,
+    "peak_layer": 27,
+    "peak_layer_correlation": 0.12556234002113342,
+    "top_3_layers": [
+      11,
+      12,
+      27
+    ]
+  }
+}

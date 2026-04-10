@@ -1,0 +1,62 @@
+# PersonaSteer Stage 1 训练配置 - Qwen3-4B (Probing优化版)
+# 基于 Probing 实验结果优化注入层配置
+#
+# Probing 关键发现:
+#   - neuroticism: 峰值层10, 相关性0.395 (最高)
+#   - introversion: 峰值层28, 相关性0.393
+#   - gender: 峰值层3, 相关性0.377
+#   - conscientiousness: 峰值层0, 相关性0.326
+#   - openness: 峰值层15, 相关性0.324
+#   - agreeableness: 峰值层11, 相关性0.242 (最低)
+#
+# 当前配置 [8-15] 问题: 错过了 gender(3), conscientiousness(0), introversion(28)
+
+# 模型配置
+model:
+  # 方案B - 按相关性加权选择 (推荐)
+  # 高相关性特质(>0.35): neuroticism, introversion, gender -> 峰值±1
+  # 低相关性特质(≤0.35): openness, conscientiousness, agreeableness -> 只选峰值
+  inject_layers: [0, 2, 3, 4, 9, 10, 11, 15, 27, 28, 29]
+  v_dim: 1024
+  hidden_dim: 4096
+  layer_dim: 2560  # Qwen3-4B hidden_size
+  v_norm_clip: null
+  v_norm_weight: 0.01
+  v_norm_target: 32.0
+  num_inject_layers: 11  # 从8层增加到11层，但覆盖更精准
+  use_layer_embedding: true
+
+# 模型路径
+base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+
+# 数据配置
+data:
+  tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+  train_path: data/split/train.jsonl
+  eval_path: data/split/val.jsonl
+  max_turns: 6
+  batch_size: 1
+  num_workers: 2
+
+# 训练配置
+training:
+  stage: 1
+  num_epochs: 4
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  sft_weight: 1.0
+  scl_weight: 0.0
+  temperature: 0.07
+  warmup_steps: 100
+  use_amp: true
+  output_dir: checkpoints/stage1_qwen3_probing_optimized
+  save_interval: 1
+  log_interval: 10
+  use_dual_loss: false
+  injected_loss_weight: 0.5
+
+# 设备配置
+device: cuda:1
+seed: 42
+debug: false

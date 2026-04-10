@@ -1,0 +1,58 @@
+{
+  "timestamp": "20260410",
+  "models": [
+    [
+      "stage1_qwen3",
+      3.0725
+    ],
+    [
+      "baseline",
+      3.07
+    ],
+    [
+      "exp_gate_init_neg3",
+      3.0
+    ],
+    [
+      "stage3_auto",
+      3.0
+    ],
+    [
+      "stage3_gate_reg_0.01_lr1e4",
+      3.0
+    ],
+    [
+      "stage1",
+      2.965
+    ],
+    [
+      "exp_gate_reg_0.001_lr5e5",
+      2.9475
+    ],
+    [
+      "stage3_gate_init_0",
+      2.9407894736842106
+    ],
+    [
+      "exp_gate_reg_0.01_lr1e4",
+      2.9347826086956523
+    ],
+    [
+      "exp_gate_init_neg2",
+      0
+    ],
+    [
+      "exp_gate_reg_0.01_lr3e5",
+      0
+    ],
+    [
+      "exp_gate_reg_0.05_lr5e5",
+      0
+    ],
+    [
+      "stage3_gate_reg_0.05_lr5e5",
+      0
+    ]
+  ],
+  "total": 13
+}

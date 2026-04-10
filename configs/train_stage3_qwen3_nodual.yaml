@@ -1,0 +1,54 @@
+# PersonaSteer Stage 3 训练配置 - Qwen3-4B (V4, 关 dual_loss)
+# 完整训练: HyperNetwork + Gate + 对比学习
+
+# 模型配置
+model:
+  inject_layers: [8, 9, 10, 11, 12, 13, 14, 15]
+  v_dim: 1024
+  hidden_dim: 4096
+  layer_dim: 2560  # Qwen3-4B hidden_size
+  v_norm_weight: 0.01
+  v_norm_target: 32.0
+  num_inject_layers: 8
+  use_layer_embedding: true
+
+# 模型路径
+base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+
+# Stage 2 checkpoint
+stage1_checkpoint: checkpoints/v4_qwen3_stage2/best.pt
+
+# 数据配置
+data:
+  tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+  train_path: data/split/train.jsonl
+  eval_path: data/split/val.jsonl
+  max_turns: 2
+  batch_size: 1
+  num_workers: 2
+
+# 训练配置
+training:
+  stage: 3
+  num_epochs: 5
+  learning_rate: 0.00003
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  sft_weight: 1.0
+  scl_weight: 0.01
+  temperature: 0.15
+  gate_min_value: 0.3
+  gate_reg_weight: 0.01
+  pos_threshold: 0.7
+  warmup_steps: 100
+  use_amp: false
+  output_dir: checkpoints/v4_qwen3_stage3
+  save_interval: 1
+  log_interval: 10
+  use_dual_loss: false
+  injected_loss_weight: 0.5
+
+# 设备配置
+device: cuda:0
+seed: 42
+debug: false

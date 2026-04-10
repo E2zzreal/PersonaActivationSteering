@@ -1,0 +1,154 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Model checkpoints and weights (large files)
+checkpoints/**/*.pt
+checkpoints/**/*.pth
+checkpoints/**/*.bin
+checkpoints/**/*.safetensors
+checkpoints/**/*.ckpt
+checkpoints/**/adapter_*.bin
+checkpoints/**/adapter_config.json
+# Keep checkpoint directory structure and small config files
+!checkpoints/**/.gitkeep
+!checkpoints/**/*.json
+!checkpoints/**/*.yaml
+!checkpoints/**/*.yml
+
+# Logs
+logs/*.log
+logs/*.json
+*.log
+
+# Data files (large datasets)
+data/**/*.json
+data/**/*.jsonl
+data/**/*.csv
+data/**/*.parquet
+data/**/*.pkl
+data/**/*.pickle
+data/**/*.pt
+data/**/*.pth
+data/**/*.npy
+data/**/*.npz
+# Keep data directory structure and scripts
+!data/**/.gitkeep
+!data/**/*.py
+!data/**/*.md
+
+# Results (may contain large files)
+results/**/*.pt
+results/**/*.pth
+results/**/*.bin
+results/**/*.pkl
+results/**/*.pickle
+# Keep result summaries
+!results/**/*.json
+!results/**/*.csv
+!results/**/*.txt
+!results/**/*.md
+
+# Experiments outputs
+experiments/**/*.pt
+experiments/**/*.pth
+experiments/**/*.bin
+experiments/**/*.safetensors
+# Keep experiment configs
+!experiments/**/*.json
+!experiments/**/*.yaml
+!experiments/**/*.yml
+!experiments/**/*.py
+
+# OS files
+.DS_Store
+.DroneSCM
+Thumbs.db
+*.bak
+*.tmp
+*.temp
+
+# Environment and secrets
+.env
+.env.*
+*.env
+secrets.yaml
+secrets.json
+credentials.json
+
+# Cache
+.cache/
+*.cache
+__pycache__/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Progress markers
+.batch*_done
+.batch*_started
+.stage*_started
+
+# Claude Code
+.claude/
+
+# Large model files (Qwen, etc.)
+Qwen/**/*.bin
+Qwen/**/*.safetensors
+Qwen/**/*.pt
+Qwen/**/*.pth
+# Keep tokenizer and config
+!Qwen/**/*.json
+!Qwen/**/*.txt
+!Qwen/**/*.py
+
+# TensorBoard
+runs/
+events.out.tfevents.*
+
+# Weights & Biases
+wandb/
+
+# DeepSpeed
+deepspeed_checkpoints/
+
+# Huggingface cache
+.cache/huggingface/
