@@ -173,9 +173,11 @@ class PersonaSteerTrainer:
             for param in self.model.injection.gate.parameters():
                 param.requires_grad = True
 
-        # 确保 hyper_network 可训练
-        for param in self.model.hyper_network.parameters():
-            param.requires_grad = True
+        # 确保 hyper_network 可训练（排除共享的 encoder）
+        # 【修复】encoder 与 backbone 共享权重，不应被解冻
+        for name, param in self.model.hyper_network.named_parameters():
+            if not name.startswith('encoder.'):
+                param.requires_grad = True
 
     def _compute_gate_regularization(self) -> torch.Tensor:
         """
