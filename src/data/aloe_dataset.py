@@ -17,9 +17,13 @@ class ALOEDataset(Dataset):
     负责从预处理后的 JSONL 文件加载多轮对话数据，
     并进行 tokenization。每个样本包含用户画像和多轮对话。
 
+    重要：对于 Qwen3 等支持 thinking 模式的模型，本类会自动禁用
+    thinking 标记（enable_thinking=False），确保训练数据格式与
+    推理时一致，避免模型学习输出思考过程。
+
     Args:
         data_path: JSONL 数据文件路径
-        tokenizer: 分词器对象
+        tokenizer: 分词器对象（支持 enable_thinking 参数）
         max_turns: 最大对话轮次数
     """
 
@@ -83,22 +87,39 @@ class ALOEDataset(Dataset):
             asst_content = asst_msg["content"]
 
             # 使用 chat template 构建完整序列
+            # 【修复】添加 enable_thinking=False 以匹配推理时的行为
+            # 这确保训练数据不包含 thinking 标记，避免模型学习输出思考过程
             messages = [
                 {"role": "user", "content": user_content},
                 {"role": "assistant", "content": asst_content}
             ]
-            full_text = self.tokenizer.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=False
-            )
+
+            try:
+                full_text = self.tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=False,
+                    enable_thinking=False
+                )
+            except TypeError:
+                # 非 Qwen3 tokenizer 不支持 enable_thinking 参数
+                full_text = self.tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=False
+                )
 
             # Tokenize 完整序列
             input_ids = self.tokenizer.encode(full_text, add_special_tokens=False)
 
             # 计算 user 部分长度（用于构建 labels）
-            user_only = self.tokenizer.apply_chat_template(
-                [{"role": "user", "content": user_content}],
-                tokenize=False, add_generation_prompt=True
-            )
+            try:
+                user_only = self.tokenizer.apply_chat_template(
+                    [{"role": "user", "content": user_content}],
+                    tokenize=False, add_generation_prompt=True,
+                    enable_thinking=False
+                )
+            except TypeError:
+                user_only = self.tokenizer.apply_chat_template(
+                    [{"role": "user", "content": user_content}],
+                    tokenize=False, add_generation_prompt=True
+                )
             user_ids = self.tokenizer.encode(user_only, add_special_tokens=False)
 
             # labels: user 部分为 -100，assistant 部分为真实 token
