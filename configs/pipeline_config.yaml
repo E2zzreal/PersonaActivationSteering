@@ -1,0 +1,159 @@
+# PersonaSteer 自动化训练流水线配置
+#
+# 基于 Probing 实验和 Gate 参数实验结果优化
+#
+# Probing 发现:
+#   - 当前配置 [8-15] 错过了 3 个关键特质峰值层
+#   - 推荐配置 [0,2,3,4,9,10,11,15,27,28,29] 覆盖所有特质
+#
+# Gate 参数实验发现:
+#   - gate_init_bias=-3 (5%初始强度) 效果最好
+#   - gate_init_bias=0 (50%初始强度) 效果较差
+#   - 低初始强度让gate从小学起更好
+
+experiments:
+  # ============================================
+  # GPU 1: Probing精简配置 (6层) + gate_init=-3
+  # ============================================
+  - name: minimal_gate_neg3
+    gpu: 1
+    config:
+      model:
+        inject_layers: [0, 3, 10, 11, 15, 28]
+        v_dim: 1024
+        hidden_dim: 4096
+        layer_dim: 2560
+        v_norm_weight: 0.01
+        v_norm_target: 32.0
+        num_inject_layers: 6
+        use_layer_embedding: true
+      base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+      data:
+        tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+        train_path: data/split/train.jsonl
+        eval_path: data/split/val.jsonl
+        max_turns: 6
+        batch_size: 1
+        num_workers: 2
+      training:
+        num_epochs: 4
+        learning_rate: 0.0001
+        weight_decay: 0.01
+        max_grad_norm: 1.0
+        sft_weight: 1.0
+        scl_weight: 0.0
+        temperature: 0.07
+        warmup_steps: 100
+        use_amp: true
+        save_interval: 1
+        log_interval: 10
+        use_dual_loss: false
+        injected_loss_weight: 0.5
+        gate_init_bias: -3.0  # 低初始强度 (5%)
+        gate_reg_weight: 0.001  # 轻微正则化
+      seed: 42
+
+  # ============================================
+  # GPU 2: 神经质专用配置 (3层) + gate_init=-3
+  # ============================================
+  - name: neuroticism_gate_neg3
+    gpu: 2
+    config:
+      model:
+        inject_layers: [9, 10, 11]
+        v_dim: 1024
+        hidden_dim: 4096
+        layer_dim: 2560
+        v_norm_weight: 0.01
+        v_norm_target: 32.0
+        num_inject_layers: 3
+        use_layer_embedding: true
+      base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+      data:
+        tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+        train_path: data/split/train.jsonl
+        eval_path: data/split/val.jsonl
+        max_turns: 6
+        batch_size: 1
+        num_workers: 2
+      training:
+        num_epochs: 4
+        learning_rate: 0.0001
+        weight_decay: 0.01
+        max_grad_norm: 1.0
+        sft_weight: 1.0
+        scl_weight: 0.0
+        temperature: 0.07
+        warmup_steps: 100
+        use_amp: true
+        save_interval: 1
+        log_interval: 10
+        use_dual_loss: false
+        injected_loss_weight: 0.5
+        gate_init_bias: -3.0
+        gate_reg_weight: 0.001
+      seed: 42
+
+  # ============================================
+  # GPU 3: 原始baseline (8层) + gate_init=-3
+  # 用于对比 Probing 优化的效果
+  # ============================================
+  - name: baseline_gate_neg3
+    gpu: 3
+    config:
+      model:
+        inject_layers: [8, 9, 10, 11, 12, 13, 14, 15]
+        v_dim: 1024
+        hidden_dim: 4096
+        layer_dim: 2560
+        v_norm_weight: 0.01
+        v_norm_target: 32.0
+        num_inject_layers: 8
+        use_layer_embedding: true
+      base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+      data:
+        tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+        train_path: data/split/train.jsonl
+        eval_path: data/split/val.jsonl
+        max_turns: 6
+        batch_size: 1
+        num_workers: 2
+      training:
+        num_epochs: 4
+        learning_rate: 0.0001
+        weight_decay: 0.01
+        max_grad_norm: 1.0
+        sft_weight: 1.0
+        scl_weight: 0.0
+        temperature: 0.07
+        warmup_steps: 100
+        use_amp: true
+        save_interval: 1
+        log_interval: 10
+        use_dual_loss: false
+        injected_loss_weight: 0.5
+        gate_init_bias: -3.0
+        gate_reg_weight: 0.001
+      seed: 42
+
+# 流水线设置
+pipeline:
+  stages:
+    - stage: 1
+      description: "Train HyperNetwork only (gate frozen)"
+      epochs: 4
+    - stage: 2
+      description: "Joint training (HyperNetwork + gate)"
+      epochs: 2
+      learning_rate: 0.00005
+    - stage: 3
+      description: "Add contrastive learning"
+      epochs: 2
+      scl_weight: 0.1
+
+  evaluation:
+    enabled: true
+    metrics:
+      - persona_score
+      - response_quality
+      - consistency

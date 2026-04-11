@@ -76,8 +76,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--device",
         type=str,
-        default="cuda" if torch.cuda.is_available() else "cpu",
-        help="Device to use for training",
+        default=None,  # 默认None，使用配置文件中的值
+        help="Device to use for training (overrides config file)",
     )
 
     parser.add_argument(
@@ -139,12 +139,21 @@ def create_model(config: dict, device: str = None) -> PersonaSteerModel:
     # 加载 encoder 和 tokenizer
     # 共享 backbone 和 encoder 的权重，节省显存
     logger.info(f"Loading backbone from {base_model_path}")
+
+    # 解析目标设备
+    if target_device.startswith("cuda:"):
+        device_map = {"": int(target_device.split(":")[1])}
+    else:
+        device_map = "auto"
+    logger.info(f"Using device_map: {device_map}")
+
     backbone = AutoModelForCausalLM.from_pretrained(
         base_model_path,
         trust_remote_code=True,
         torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
         low_cpu_mem_usage=True,
-        use_cache=False
+        use_cache=False,
+        device_map=device_map,
     )
 
     # Encoder 共享 backbone 的 transformer 层权重
@@ -169,9 +178,25 @@ def create_model(config: dict, device: str = None) -> PersonaSteerModel:
         backbone.gradient_checkpointing_disable()
         logger.info("Gradient checkpointing disabled (dual loss mode)")
 
-    # 【修复】将模型移动到目标设备
-    model.to(target_device)
-    logger.info(f"Model moved to {target_device}")
+    # 【修复】确保所有组件在正确设备上
+    # backbone 已通过 device_map 加载到目标设备
+    # 需要确保 hyper_network 和 injection 也在同一设备
+    target_device_obj = torch.device(target_device)
+
+    # 移动 hyper_network 组件（encoder 已在正确设备，只移动其他参数）
+    if model.hyper_network is not None:
+        # 移动 hyper_network 的可训练参数
+        for name, param in model.hyper_network.named_parameters():
+            if param.device != target_device_obj:
+                param.data = param.data.to(target_device_obj)
+        logger.info(f"HyperNetwork parameters moved to {target_device}")
+
+    # 移动 injection 模块
+    if model.injection is not None:
+        model.injection.to(target_device_obj)
+        logger.info(f"Injection module moved to {target_device}")
+
+    logger.info(f"All model components on {target_device}")
 
     logger.info(f"Model created with {sum(p.numel() for p in model.parameters()):,} parameters")
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
