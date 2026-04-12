@@ -1,0 +1,25 @@
+{
+  "timestamp": "20260412_094932",
+  "results": {
+    "stage1_neuroticism": {
+      "status": "success",
+      "exit_code": 0,
+      "checkpoint": "checkpoints/stage1_qwen3_neuroticism/best.pt"
+    },
+    "stage1_minimal": {
+      "status": "success",
+      "exit_code": 0,
+      "checkpoint": "checkpoints/stage1_qwen3_probing_minimal/best.pt"
+    },
+    "stage1_baseline": {
+      "status": "success",
+      "exit_code": 0,
+      "checkpoint": "checkpoints/stage1_qwen3/best.pt"
+    },
+    "stage2_v2": {
+      "status": "success",
+      "exit_code": 0,
+      "checkpoint": "checkpoints/stage2_qwen3_v2/best.pt"
+    }
+  }
+}

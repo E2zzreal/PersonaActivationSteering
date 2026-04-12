@@ -1,0 +1,14 @@
+{
+  "stage1": {
+    "stage": "stage1",
+    "checkpoint": "/home/kemove/Desktop/PersonaSteer/checkpoints/stage1_qwen3/best.pt",
+    "num_responses": 150,
+    "judge_model": "GPT-5.2",
+    "num_scored": 150,
+    "mean_score": 3.744,
+    "std_score": 0.43,
+    "median_score": 3.707,
+    "min_score": 3.018,
+    "max_score": 4.5
+  }
+}
