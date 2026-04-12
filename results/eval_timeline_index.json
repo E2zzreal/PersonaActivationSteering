@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-04-12T19:13:36",
+  "results": [
+    {
+      "dir": "results/eval_20260411_163906",
+      "file_count": 17,
+      "latest_file": "results/eval_20260411_163906/baseline_gate_decision.json",
+      "latest_mtime": "2026-04-12T19:03:05"
+    },
+    {
+      "dir": "results/eval_baseline_20260412_180724",
+      "file_count": 2,
+      "latest_file": "results/eval_baseline_20260412_180724/baseline/eval_summary.json",
+      "latest_mtime": "2026-04-12T18:14:23"
+    },
+    {
+      "dir": "results/eval_stage3_20260412_151649",
+      "file_count": 2,
+      "latest_file": "results/eval_stage3_20260412_151649/stage3_v2/eval_summary.json",
+      "latest_mtime": "2026-04-12T15:23:40"
+    },
+    {
+      "dir": "results/eval_20260412_094932",
+      "file_count": 9,
+      "latest_file": "results/eval_20260412_094932/eval_summary.json",
+      "latest_mtime": "2026-04-12T10:16:29"
+    },
+    {
+      "dir": "results/reprocess_20260411_182520",
+      "file_count": 10,
+      "latest_file": "results/reprocess_20260411_182520/neuroticism_stage3_reprocessed.json",
+      "latest_mtime": "2026-04-11T18:30:29"
+    }
+  ]
+}

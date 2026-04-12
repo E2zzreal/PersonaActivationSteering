@@ -2,6 +2,11 @@
 
 > 生成日期: 2026-04-12
 > 更新: 添加 Baseline 对比分析
+> 当前权威结果目录：
+> - baseline：`results/eval_baseline_20260412_180724/`
+> - stage3_v2：`results/eval_stage3_20260412_151649/`
+> - 旧评估目录已归档到 `results/archive_20260412/legacy_eval/`
+
 
 ## 1. 执行摘要
 

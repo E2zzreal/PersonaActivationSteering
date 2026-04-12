@@ -1,0 +1,14 @@
+{
+  "baseline": {
+    "key": "baseline",
+    "score": 3.803,
+    "leak_rate": 0.0133,
+    "source_dir": "results/eval_baseline_20260412_180724/"
+  },
+  "stage3_v2": {
+    "key": "stage3_v2",
+    "score": 3.761,
+    "leak_rate": 0.3267,
+    "source_dir": "results/eval_stage3_20260412_151649/"
+  }
+}

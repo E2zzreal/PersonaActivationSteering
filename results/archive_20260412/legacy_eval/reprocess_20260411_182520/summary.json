@@ -1,0 +1,56 @@
+{
+  "baseline_stage1": {
+    "count": 10,
+    "avg_original": 3.2,
+    "avg_new": 3.2,
+    "responses_changed": 7
+  },
+  "baseline_stage2": {
+    "count": 10,
+    "avg_original": 2.8,
+    "avg_new": 2.9,
+    "responses_changed": 6
+  },
+  "baseline_stage3": {
+    "count": 9,
+    "avg_original": 2.888888888888889,
+    "avg_new": 2.5555555555555554,
+    "responses_changed": 6
+  },
+  "minimal_stage1": {
+    "count": 10,
+    "avg_original": 3.0,
+    "avg_new": 3.1,
+    "responses_changed": 7
+  },
+  "minimal_stage2": {
+    "count": 10,
+    "avg_original": 3.1,
+    "avg_new": 3.4,
+    "responses_changed": 8
+  },
+  "minimal_stage3": {
+    "count": 10,
+    "avg_original": 3.3,
+    "avg_new": 2.9,
+    "responses_changed": 7
+  },
+  "neuroticism_stage1": {
+    "count": 10,
+    "avg_original": 2.8,
+    "avg_new": 2.7,
+    "responses_changed": 7
+  },
+  "neuroticism_stage2": {
+    "count": 10,
+    "avg_original": 3.0,
+    "avg_new": 2.8,
+    "responses_changed": 7
+  },
+  "neuroticism_stage3": {
+    "count": 10,
+    "avg_original": 2.7,
+    "avg_new": 2.6,
+    "responses_changed": 8
+  }
+}
