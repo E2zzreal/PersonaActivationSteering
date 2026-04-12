@@ -16,6 +16,8 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
+from src.evaluation.thinking_leak import conservative_clean_response
+
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -92,15 +94,11 @@ def load_baseline(base_model_path: str, device: str):
 
 
 def clean_qwen3_response(text: str) -> str:
-    """清理 Qwen3 的思考 token，只保留最终回复"""
+    """清理 Qwen3 的 think token，只保留最终回复。"""
     import re
-    # 移除 <think...</think 块
     text = re.sub(r'<think.*?</think\s*>', '', text, flags=re.DOTALL)
-    # 如果还有未闭合的 <think，移除从 <think 开始的内容
     text = re.sub(r'<think.*', '', text, flags=re.DOTALL)
-    # 移除开头的空白和特殊字符
-    text = text.strip()
-    return text
+    return text.strip()
 
 
 def load_persona_steer(checkpoint_path: str, base_model_path: str, device: str,
