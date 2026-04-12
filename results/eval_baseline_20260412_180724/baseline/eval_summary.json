@@ -1,0 +1,14 @@
+{
+  "baseline": {
+    "stage": "baseline",
+    "checkpoint": null,
+    "num_responses": 150,
+    "judge_model": "GPT-5.2",
+    "num_scored": 150,
+    "mean_score": 3.803,
+    "std_score": 0.445,
+    "median_score": 3.806,
+    "min_score": 3.001,
+    "max_score": 4.499
+  }
+}
