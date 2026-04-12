@@ -16,10 +16,10 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from src.evaluation.thinking_leak import conservative_clean_response
-
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+
+from src.evaluation.thinking_leak import conservative_clean_response
 
 try:
     from openai import OpenAI
@@ -351,17 +351,43 @@ def main():
                         )
 
                     if response:
+                        leak_result = conservative_clean_response(response)
+                        gate_values = None
+                        gate_mean = None
+                        gate_std = None
+                        gate_max = None
+                        gate_min = None
+                        if target["type"] != "baseline" and hasattr(model, 'injection') and getattr(model.injection, 'current_gate_values', None) is not None:
+                            gate_tensor = model.injection.current_gate_values.detach().float().cpu()
+                            if gate_tensor.dim() >= 2 and gate_tensor.size(0) > 0:
+                                gate_row = gate_tensor[0]
+                                gate_values = [round(float(v), 6) for v in gate_row.tolist()]
+                                gate_mean = round(float(gate_row.mean().item()), 6)
+                                gate_std = round(float(gate_row.std().item()), 6)
+                                gate_max = round(float(gate_row.max().item()), 6)
+                                gate_min = round(float(gate_row.min().item()), 6)
                         entry = {
                             "personality": personality[:200],
                             "profile": profile[:200],
                             "user_input": user_input,
-                            "response": response,
+                            "response": leak_result.clean_response,
+                            "raw_response": leak_result.raw_response,
+                            "clean_response": leak_result.clean_response,
+                            "leak_detected": leak_result.leak_detected,
+                            "leak_patterns": leak_result.leak_patterns,
+                            "cleaning_applied": leak_result.cleaning_applied,
+                            "cleaning_skipped": leak_result.cleaning_skipped,
+                            "gate_values": gate_values,
+                            "gate_mean": gate_mean,
+                            "gate_std": gate_std,
+                            "gate_max": gate_max,
+                            "gate_min": gate_min,
                             "stage": stage_name,
                         }
                         responses.append(entry)
 
                         if not args.skip_judge:
-                            score = judge.score(response, personality)
+                            score = judge.score(leak_result.clean_response, personality)
                             entry["judge_score"] = score
                             scores.append(score)
 
