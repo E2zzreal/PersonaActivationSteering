@@ -1,0 +1,439 @@
+{
+  "data": "data/split/train.jsonl",
+  "split": "train",
+  "total_turns": 27770,
+  "thinking_like_turns": 41,
+  "thinking_like_ratio": 0.0015,
+  "by_pattern": {
+    "\\bI should\\b": 24,
+    "\\bI need to\\b": 15,
+    "\\bOkay,?\\b": 2
+  },
+  "by_language": {
+    "en": 27770
+  },
+  "by_turn_index": {
+    "0": 2,
+    "1": 8,
+    "2": 5,
+    "3": 3,
+    "4": 9,
+    "5": 1,
+    "6": 2,
+    "7": 3,
+    "8": 1,
+    "9": 7
+  },
+  "top_examples": [
+    {
+      "sample_index": 129,
+      "turn_index": 9,
+      "user_id": "u1227",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "That’s the spirit! I try to catch concerts whenever I can, but I need to step up my game and explore more local talent like you do. Do you usually go with friends, or do you brave the scene solo?"
+    },
+    {
+      "sample_index": 172,
+      "turn_index": 0,
+      "user_id": "u0245",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Hey! I'm doing well, thanks for asking. I haven't checked out any new spots recently, but I love hearing about them—what did you think of the restaurant? Any standout dishes I should try?"
+    },
+    {
+      "sample_index": 197,
+      "turn_index": 3,
+      "user_id": "u2533",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "A hidden lake sounds fantastic! I love reading at this cozy little park with sprawling trees; it feels like a mini getaway. Maybe next time, I should join you and Max for a picnic—double the fun!"
+    },
+    {
+      "sample_index": 336,
+      "turn_index": 4,
+      "user_id": "u2047",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Thank you for the tips! I appreciate how methodical you are; I'll definitely keep the watering in mind. It sounds like they would complement my roses beautifully—maybe I should plan for a dedicated sunflower patch!"
+    },
+    {
+      "sample_index": 481,
+      "turn_index": 6,
+      "user_id": "u1409",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "That sounds incredible! Thai green curry is a classic—love that balance of flavors. I don’t experiment as much as I’d like, but I enjoy trying new dishes when I can; maybe I should take inspiration from you!"
+    },
+    {
+      "sample_index": 544,
+      "turn_index": 9,
+      "user_id": "u2524",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "I mostly play music during camping trips; it just feels fitting with the nature vibes. But I do enjoy strumming my guitar at home now and then, especially when I need to unwind. Music has a way of making everyday moments feel a bit more spe"
+    },
+    {
+      "sample_index": 549,
+      "turn_index": 7,
+      "user_id": "u2998",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "Bach is such a fantastic choice; his music really does have a calming depth! I love listening to ambient music or light jazz when I need to unwind—it's perfect for setting a relaxed atmosphere. Sharing music with friends sounds like a wonde"
+    },
+    {
+      "sample_index": 620,
+      "turn_index": 4,
+      "user_id": "u3787",
+      "language": "en",
+      "patterns": [
+        "\\bOkay,?\\b"
+      ],
+      "preview": "I’m ready to have my mind blown! It sounds like a whole new world down there. Just promise me one thing—no embarrassing fish selfies, okay?"
+    },
+    {
+      "sample_index": 658,
+      "turn_index": 2,
+      "user_id": "u3005",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "That’s awesome! I haven’t done any serious hikes recently, but I’ve been sticking to my cycling routine and racing on weekends. Maybe I should look for some trails to mix things up and test my limits, too!"
+    },
+    {
+      "sample_index": 750,
+      "turn_index": 2,
+      "user_id": "u2507",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "Bass fishing sounds like a thrilling challenge! When I need to unwind, I enjoy hiking—it’s a great way to be in nature and clear my mind. Do you ever combine fishing with other outdoor activities?"
+    },
+    {
+      "sample_index": 854,
+      "turn_index": 7,
+      "user_id": "u2505",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Smoked paprika is a brilliant touch! I’ve tried making paella a couple of times, but it never turns out quite like I hope. Yours sounds like it’s a masterpiece—maybe I should get some tips from you next time!"
+    },
+    {
+      "sample_index": 917,
+      "turn_index": 4,
+      "user_id": "u0708",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "Absolutely! I love listening to those tracks while working out; they really keep me motivated and in the zone. I also play them when I need to tackle chores or prep for classes—it just makes everything more enjoyable! Do you have a favorite"
+    },
+    {
+      "sample_index": 920,
+      "turn_index": 4,
+      "user_id": "u0912",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "That’s such a great mindset! I haven’t participated in charity events recently, but I love the idea of supporting causes I care about. Maybe I should look into some local events—I’d really enjoy connecting with others who share the same pas"
+    },
+    {
+      "sample_index": 1141,
+      "turn_index": 6,
+      "user_id": "u0148",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "I totally get that! For me, unwinding usually involves diving into a good book or going for a walk to clear my mind. Sometimes, just a bit of quiet time with a cozy blanket is all I need to recharge!"
+    },
+    {
+      "sample_index": 1147,
+      "turn_index": 4,
+      "user_id": "u1113",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "That sounds lovely! My workspace is a bit cluttered right now, honestly. I do have a couple of succulents, which help, but I know I need to tidy up and create a more focused space."
+    },
+    {
+      "sample_index": 1215,
+      "turn_index": 2,
+      "user_id": "u2336",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "For sure! I’m currently building a sweet bench for the yard—perfect for chilling after a skate session. Got any skate-themed ideas I should throw into the mix?"
+    },
+    {
+      "sample_index": 1306,
+      "turn_index": 5,
+      "user_id": "u0984",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "I definitely will! I love how nature provides such effective solutions for our skincare needs. Do you have any other favorite DIY recipes I should try?"
+    },
+    {
+      "sample_index": 1317,
+      "turn_index": 2,
+      "user_id": "u1808",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Definitely! Climbing looks like such a fun challenge, and I love the idea of pushing my limits. It would be a great way to mix things up from running—maybe I should give it a shot sometime!"
+    },
+    {
+      "sample_index": 1339,
+      "turn_index": 7,
+      "user_id": "u3549",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "I’ve started brainstorming ideas for the layout and which photos to showcase, but I need to finalize a few things first. I want it to have a relaxed vibe that feels just like the beach! It’ll be fun to invite friends over for a mini exhibit"
+    },
+    {
+      "sample_index": 1363,
+      "turn_index": 4,
+      "user_id": "u2343",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "I will definitely keep you posted on how it turns out! I love sharing these cooking adventures with you. Do you have any other favorite vegan recipes up your sleeve that I should try?"
+    },
+    {
+      "sample_index": 1507,
+      "turn_index": 9,
+      "user_id": "u1016",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "That’s wonderful to hear! It’s so rewarding to spark that sense of wonder in others. Maybe I should follow your lead and share more of the fascinating science behind my fossils and rocks, too—what do you think?"
+    },
+    {
+      "sample_index": 1769,
+      "turn_index": 1,
+      "user_id": "u0274",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "I totally get that; it’s a big event! I’ve been keeping busy with a mix of work and some hobbies, trying to find balance. Just like you, I enjoy taking breaks to recharge—maybe I need to start running, too!"
+    },
+    {
+      "sample_index": 1848,
+      "turn_index": 4,
+      "user_id": "u2484",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Homemade pasta sounds fantastic—definitely a labor of love! I don’t share my cooking much on social media, but I should start. Do you post your pasta creations online?"
+    },
+    {
+      "sample_index": 1964,
+      "turn_index": 1,
+      "user_id": "u3281",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Wow, that sounds absolutely stunning! I’ve dabbled a bit with drone flying but never captured anything that beautiful—maybe I should start taking lessons from you! What's the secret to getting those vibrant sunset colors?"
+    },
+    {
+      "sample_index": 1985,
+      "turn_index": 9,
+      "user_id": "u1313",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "One of my favorite spots is a picturesque trail by a lake that winds through the trees. The blend of water and wildlife creates a peaceful atmosphere that really helps clear my head. It’s the perfect escape whenever I need to recharge!"
+    },
+    {
+      "sample_index": 2131,
+      "turn_index": 3,
+      "user_id": "u2543",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Those plants sound amazing! I haven't done much gardening myself, but I love the idea of growing my own food. Maybe I should give it a try—what tips do you have for a beginner?"
+    },
+    {
+      "sample_index": 2202,
+      "turn_index": 9,
+      "user_id": "u0703",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "That sounds like the perfect pit stop! Family traditions like that make the journey even more special. Do you have any burger recommendations from the diner that I should try next time I'm in the area?"
+    },
+    {
+      "sample_index": 2240,
+      "turn_index": 3,
+      "user_id": "u3579",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "Absolutely, their storytelling is captivating! When I need to unplug, I usually go for instrumental playlists or soft piano music. It really helps me relax and clear my mind."
+    },
+    {
+      "sample_index": 2258,
+      "turn_index": 4,
+      "user_id": "u1629",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Salsa sounds like a blast! I’ve dabbled in a few dance classes, and it’s such a fun way to stay fit while learning new moves. Maybe I should join you for a salsa session sometime!"
+    },
+    {
+      "sample_index": 2330,
+      "turn_index": 4,
+      "user_id": "u2727",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Snarky Puppy sounds right up my alley—I'll definitely check out \"Lingus\"! I’m a big fan of John Coltrane and Kamasi Washington; their sounds always leave me inspired. Any other bands or tracks you think I should dive into?"
+    },
+    {
+      "sample_index": 2346,
+      "turn_index": 1,
+      "user_id": "u3483",
+      "language": "en",
+      "patterns": [
+        "\\bOkay,?\\b"
+      ],
+      "preview": "I totally get that; time can be a real challenge! I try to prioritize tasks and set boundaries to carve out family time. Sometimes I just have to remind myself that it’s okay to not do it all."
+    },
+    {
+      "sample_index": 2363,
+      "turn_index": 1,
+      "user_id": "u0939",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Wow, swimming with a school of colorful fish sounds magical, and spotting a turtle is such a bonus! I’ve been doing well, just keeping busy and dreaming of my next snorkeling adventure. Any tips for where I should go next?"
+    },
+    {
+      "sample_index": 2391,
+      "turn_index": 9,
+      "user_id": "u2548",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "I’ve thought about it! Joining a league sounds fun, especially with that community vibe you mentioned. I love the idea of meeting new people and leveling up my game—maybe I should give it a shot!"
+    },
+    {
+      "sample_index": 2425,
+      "turn_index": 1,
+      "user_id": "u2043",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "That rush sounds amazing! I haven’t picked up any new hobbies lately, but I'm always inspired by the creativity in fashion and sports. Maybe I’ll try something new soon—what do you think I should explore?"
+    },
+    {
+      "sample_index": 2428,
+      "turn_index": 8,
+      "user_id": "u2314",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Thank you! That’s really encouraging to hear. It’s comforting to know I’m not alone in feeling that way, and maybe I should just embrace the experience!"
+    },
+    {
+      "sample_index": 2476,
+      "turn_index": 2,
+      "user_id": "u2698",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "I totally get that! I enjoy reading and listening to music to unwind; it really helps me escape and recharge. Sometimes, just taking a quiet moment is all I need to feel refreshed!"
+    },
+    {
+      "sample_index": 2509,
+      "turn_index": 1,
+      "user_id": "u1144",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "That sounds great! I’ve just been keeping busy with some reading and catching up on shows. Swimming is such a refreshing way to unwind; I should try to incorporate that more!"
+    },
+    {
+      "sample_index": 2559,
+      "turn_index": 1,
+      "user_id": "u1792",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "Freestyle is definitely a great choice! I swim whenever I can, especially when I need to clear my head or just enjoy the water. Do you have any upcoming meets?"
+    },
+    {
+      "sample_index": 2574,
+      "turn_index": 0,
+      "user_id": "u2929",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Hey! That sounds like a lot of fun! I’ve been diving into some financial trends lately—always exciting to learn something new, but I definitely think I should spend more time in the kitchen experimenting like you! What recipes have you trie"
+    },
+    {
+      "sample_index": 2734,
+      "turn_index": 1,
+      "user_id": "u0844",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "Sounds perfect! I’ve been tinkering with some cool engineering projects lately, but I’m definitely missing that beach vibe. I need to hit the waves more often—your morning surf sounds like the ideal way to recharge!"
+    },
+    {
+      "sample_index": 2755,
+      "turn_index": 9,
+      "user_id": "u2364",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "Absolutely! I love playing classic rock; it’s so energizing and nostalgic. But I also enjoy some soft acoustic vibes for when I need to unwind. What’s your go-to genre when you cozy up with a good book?"
+    }
+  ]
+}

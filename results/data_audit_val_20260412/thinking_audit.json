@@ -1,0 +1,125 @@
+{
+  "data": "data/split/val.jsonl",
+  "split": "val",
+  "total_turns": 6610,
+  "thinking_like_turns": 10,
+  "thinking_like_ratio": 0.0015,
+  "by_pattern": {
+    "\\bI should\\b": 7,
+    "\\bI need to\\b": 2,
+    "\\bOkay,?\\b": 1
+  },
+  "by_language": {
+    "en": 6610
+  },
+  "by_turn_index": {
+    "1": 2,
+    "2": 1,
+    "3": 2,
+    "4": 3,
+    "5": 1,
+    "6": 1
+  },
+  "top_examples": [
+    {
+      "sample_index": 10,
+      "turn_index": 4,
+      "user_id": "u0579",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "I haven’t participated in many, but I love the idea of sharing and hearing stories in that way! It’s such a powerful experience, feeling the energy of the audience and connecting through words. Maybe I should give it a try sometime—Melody m"
+    },
+    {
+      "sample_index": 151,
+      "turn_index": 3,
+      "user_id": "u0404",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Those are fantastic choices! “Uptown Funk” always gets everyone fired up—such a fun vibe. I’d love to see their dance moves; maybe I should join in and show off my own (awkward) skills!"
+    },
+    {
+      "sample_index": 229,
+      "turn_index": 3,
+      "user_id": "u2571",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Absolutely, I’ll keep you posted! I can’t wait to share the experience with you. Any other favorite spots I should check out while I’m there?"
+    },
+    {
+      "sample_index": 257,
+      "turn_index": 5,
+      "user_id": "u0527",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "Both are fantastic picks! \"Murder on the Orient Express\" is a brilliant classic, and I’ve heard great things about \"The Pillars of the Earth\"—I need to check it out! Those kinds of stories are perfect for an escape, especially on a nice day"
+    },
+    {
+      "sample_index": 320,
+      "turn_index": 4,
+      "user_id": "u1214",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Science fiction is such a great genre for sparking the imagination! I recently read a fantastic sci-fi novel that explored some mind-bending concepts—it really made me think. Do you have any favorite sci-fi authors or books I should check o"
+    },
+    {
+      "sample_index": 375,
+      "turn_index": 1,
+      "user_id": "u2535",
+      "language": "en",
+      "patterns": [
+        "\\bOkay,?\\b"
+      ],
+      "preview": "Nice, kickflips are tricky! My schoolwork is okay, just the usual stuff, but I’ve got a project coming up that I’m actually excited about. Maybe I can power through and join you at the park next time to cheer you on!"
+    },
+    {
+      "sample_index": 425,
+      "turn_index": 1,
+      "user_id": "u3139",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Vinyasa is such a great choice! I enjoy staying active through different workouts, but I haven't tried yoga yet. Maybe I should give it a shot one of these days!"
+    },
+    {
+      "sample_index": 430,
+      "turn_index": 6,
+      "user_id": "u3401",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "Salsa dancing sounds like a blast! I haven’t tried dance classes yet, but I’d love to. It’s such a fun way to get moving and meet new people—maybe I should give it a shot!"
+    },
+    {
+      "sample_index": 539,
+      "turn_index": 4,
+      "user_id": "u1014",
+      "language": "en",
+      "patterns": [
+        "\\bI need to\\b"
+      ],
+      "preview": "Chopin’s Nocturnes are truly soothing! When I need to unwind, I often listen to some ambient or soft acoustic music. It helps clear my mind and relax."
+    },
+    {
+      "sample_index": 651,
+      "turn_index": 2,
+      "user_id": "u2753",
+      "language": "en",
+      "patterns": [
+        "\\bI should\\b"
+      ],
+      "preview": "I haven't dedicated an entire book to Long Tan yet, but I’ve touched on it in some chapters discussing guerrilla warfare and the Vietnam conflict. The stories of those soldiers really resonate, and I find their experiences critical to under"
+    }
+  ]
+}
