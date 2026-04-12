@@ -17,7 +17,7 @@ model:
 base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
 
 # Stage 2 checkpoint
-stage2_checkpoint: checkpoints/stage2_qwen3/best.pt
+stage2_checkpoint: checkpoints/stage2_qwen3_v2/best.pt
 
 # 数据配置
 data:

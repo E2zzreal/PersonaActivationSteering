@@ -111,6 +111,25 @@ def load_persona_steer(checkpoint_path: str, base_model_path: str, device: str,
     logger.info(f"[PersonaSteer] Loading checkpoint {checkpoint_path}")
     device = torch.device(device)
 
+    # 先加载 checkpoint 检测注入层数
+    ckpt = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+
+    # 自动检测 num_inject_layers
+    layer_emb_key = 'hyper_network.layer_embedding.weight'
+    if layer_emb_key in ckpt["model_state_dict"]:
+        num_inject_layers = ckpt["model_state_dict"][layer_emb_key].shape[0]
+        logger.info(f"[PersonaSteer] Detected num_inject_layers={num_inject_layers} from checkpoint")
+        if inject_layers is None:
+            # 根据检测到的层数推断 inject_layers
+            # Qwen3-4B 有 40 层，默认从中间开始注入
+            start_layer = 8  # 默认起始层
+            inject_layers = list(range(start_layer, start_layer + num_inject_layers))
+            logger.info(f"[PersonaSteer] Auto-detected inject_layers={inject_layers}")
+    else:
+        num_inject_layers = 8
+        if inject_layers is None:
+            inject_layers = list(range(8, 16))
+
     tokenizer = AutoTokenizer.from_pretrained(base_model_path, trust_remote_code=True)
     backbone = AutoModelForCausalLM.from_pretrained(
         base_model_path,
@@ -119,10 +138,6 @@ def load_persona_steer(checkpoint_path: str, base_model_path: str, device: str,
     ).to(device)
 
     backbone_config = AutoConfig.from_pretrained(base_model_path, trust_remote_code=True)
-
-    # 默认 inject_layers: Qwen3-4B 的 [8-15]
-    if inject_layers is None:
-        inject_layers = list(range(8, 16))
 
     persona_config = PersonaSteerConfig(
         inject_layers=inject_layers,
@@ -139,7 +154,6 @@ def load_persona_steer(checkpoint_path: str, base_model_path: str, device: str,
         model.hyper_network.set_tokenizer(tokenizer)
 
     # 加载 checkpoint
-    ckpt = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
     stage = ckpt.get("stage", 1)
 
     model_state = model.state_dict()
@@ -195,7 +209,8 @@ def generate_persona_steer(model, tokenizer, user_input: str, personality: str,
         generated_ids, _ = model.generate(
             input_ids=input_ids,
             v_prev=v_prev,
-            user_texts=[personality],
+            personality_texts=[personality],
+            user_query_texts=[user_input],
             max_new_tokens=150,
             temperature=0.7,
         )
@@ -216,7 +231,7 @@ def main():
     parser.add_argument("--judge_model", type=str, default="GPT-5.2")
     parser.add_argument("--output_dir", type=str, default="results/v4_qwen3_eval")
     parser.add_argument("--base_model", type=str,
-                        default="/home/kemove/.cache/modelscope/Qwen/Qwen3-4B")
+                        default="/home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B")
     parser.add_argument("--skip_judge", action="store_true")
     # 动态指定要评估的 stages
     parser.add_argument("--stages", type=str, nargs="+",
@@ -226,6 +241,9 @@ def main():
                         default="checkpoints/v4_qwen3_stage2/best.pt")
     parser.add_argument("--stage3_checkpoint", type=str,
                         default="checkpoints/v4_qwen3_stage3/best.pt")
+    parser.add_argument("--stage1_checkpoint", type=str,
+                        default="checkpoints/stage1_qwen3/best.pt",
+                        help="Custom stage1 checkpoint path")
     args = parser.parse_args()
 
     output_dir = Path(args.output_dir)
@@ -256,18 +274,18 @@ def main():
         "baseline": {"type": "baseline", "checkpoint": None},
         "stage1": {
             "type": "persona_steer",
-            "checkpoint": "checkpoints/stage1_qwen3/best.pt",
-            "inject_layers": list(range(8, 16)),  # Stage1 用 8 层
+            "checkpoint": args.stage1_checkpoint,
+            "inject_layers": None,  # 自动检测
         },
         "stage2": {
             "type": "persona_steer",
             "checkpoint": args.stage2_checkpoint,
-            "inject_layers": [12, 13, 14, 15],  # Stage2 临时 4 层
+            "inject_layers": None,  # 自动检测
         },
         "stage3": {
             "type": "persona_steer",
             "checkpoint": args.stage3_checkpoint,
-            "inject_layers": list(range(8, 16)),  # Stage3 恢复 8 层
+            "inject_layers": None,  # 自动检测
         },
     }
 
