@@ -3,15 +3,23 @@
 
 # BLSC API配置
 blsc:
-  api_key: "sk-qF4m66e6_2_VnygJGmxBJQ"  # 请替换为您的实际API key
+  api_key: "sk-qF4m66e6_2_VnygJGmxBJQ"
   base_url: "https://llmapi.blsc.cn"
   model: "GPT-5.2"
+  claude_generator_model: "Claude-Opus-4.6"
 
 # OpenAI API配置（备用）
 openai:
-  api_key: "YOUR_OPENAI_API_KEY_HERE"  # 如果使用OpenAI，请替换
+  api_key: "YOUR_OPENAI_API_KEY_HERE"
   base_url: null
   model: "gpt-4o"
 
 # 默认使用哪个API
 default: "blsc"
+
+# Judge 模型组合（多模型评估用）
+judge_models:
+  - model: "GPT-5.4"
+    api: "blsc"
+  - model: "GLM-5.1"
+    api: "blsc"

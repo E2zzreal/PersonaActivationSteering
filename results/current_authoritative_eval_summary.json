@@ -1,14 +1,30 @@
 {
   "baseline": {
     "key": "baseline",
-    "score": 3.803,
-    "leak_rate": 0.0133,
-    "source_dir": "results/eval_baseline_20260412_180724/"
+    "score": 3.556,
+    "leak_rate": 0.0111,
+    "source_dir": "results/eval_authoritative_m15_20260413/",
+    "stage_name": "baseline"
   },
-  "stage3_v2": {
-    "key": "stage3_v2",
-    "score": 3.761,
-    "leak_rate": 0.3267,
-    "source_dir": "results/eval_stage3_20260412_151649/"
+  "stage1": {
+    "key": "stage1",
+    "score": 3.533,
+    "leak_rate": 0.0,
+    "source_dir": "results/eval_authoritative_m15_20260413/",
+    "stage_name": "stage1"
+  },
+  "stage2": {
+    "key": "stage2",
+    "score": 3.589,
+    "leak_rate": 0.0222,
+    "source_dir": "results/eval_authoritative_m15_20260413/",
+    "stage_name": "stage2"
+  },
+  "stage3": {
+    "key": "stage3",
+    "score": 3.533,
+    "leak_rate": 0.0222,
+    "source_dir": "results/eval_authoritative_m15_20260413/",
+    "stage_name": "stage3"
   }
 }

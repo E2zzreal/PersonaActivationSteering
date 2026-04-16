@@ -199,8 +199,26 @@ def generate_baseline(model, tokenizer, user_input: str, personality: str,
 def generate_persona_steer(model, tokenizer, user_input: str, personality: str,
                            profile: str, device: str) -> str:
     device = torch.device(device)
-    prompt = f"用户: {user_input}\n助手:"
+    messages = [
+        {"role": "system", "content": f"/no_think\n你的人格特征是：{personality}\n\n你的个人简介：{profile}"},
+        {"role": "user", "content": user_input},
+    ]
+    try:
+        prompt = tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False,
+        )
+    except TypeError:
+        prompt = tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+
     input_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
+    prompt_len = input_ids.shape[1]
     v_prev = torch.zeros(1, model.v_dim, device=device)
 
     with torch.no_grad():
@@ -211,17 +229,23 @@ def generate_persona_steer(model, tokenizer, user_input: str, personality: str,
             user_query_texts=[user_input],
             max_new_tokens=150,
             temperature=0.7,
+            top_p=0.9,
         )
 
-    response = tokenizer.decode(generated_ids[0], skip_special_tokens=True)
-    if "助手:" in response:
-        response = response.split("助手:")[-1].strip()
+    response = tokenizer.decode(generated_ids[0][prompt_len:], skip_special_tokens=True)
     response = clean_qwen3_response(response)
-    return response
+    return response.strip()
 
 
 def main():
     import argparse
+
+    def parse_layer_list(value: str):
+        value = (value or '').strip()
+        if not value:
+            return None
+        return [int(item.strip()) for item in value.split(',') if item.strip()]
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_samples", type=int, default=30)
     parser.add_argument("--max_turns_per_sample", type=int, default=3)
@@ -238,11 +262,21 @@ def main():
     parser.add_argument("--stage2_checkpoint", type=str,
                         default="checkpoints/v4_qwen3_stage2/best.pt")
     parser.add_argument("--stage3_checkpoint", type=str,
-                        default="checkpoints/v4_qwen3_stage3/best.pt")
+                        default="checkpoints/stage3_qwen3_v2/best.pt")
     parser.add_argument("--stage1_checkpoint", type=str,
                         default="checkpoints/stage1_qwen3/best.pt",
                         help="Custom stage1 checkpoint path")
+    parser.add_argument("--stage1_inject_layers", type=str, default=None,
+                        help="逗号分隔的 stage1 注入层列表，例如 8,9,10,11,12,13,14,15")
+    parser.add_argument("--stage2_inject_layers", type=str, default=None,
+                        help="逗号分隔的 stage2 注入层列表")
+    parser.add_argument("--stage3_inject_layers", type=str, default=None,
+                        help="逗号分隔的 stage3 注入层列表")
     args = parser.parse_args()
+
+    stage1_inject_layers = parse_layer_list(args.stage1_inject_layers)
+    stage2_inject_layers = parse_layer_list(args.stage2_inject_layers)
+    stage3_inject_layers = parse_layer_list(args.stage3_inject_layers)
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -273,17 +307,17 @@ def main():
         "stage1": {
             "type": "persona_steer",
             "checkpoint": args.stage1_checkpoint,
-            "inject_layers": None,  # 自动检测
+            "inject_layers": stage1_inject_layers,
         },
         "stage2": {
             "type": "persona_steer",
             "checkpoint": args.stage2_checkpoint,
-            "inject_layers": None,  # 自动检测
+            "inject_layers": stage2_inject_layers,
         },
         "stage3": {
             "type": "persona_steer",
             "checkpoint": args.stage3_checkpoint,
-            "inject_layers": None,  # 自动检测
+            "inject_layers": stage3_inject_layers,
         },
     }
 
