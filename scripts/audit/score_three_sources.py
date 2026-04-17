@@ -102,8 +102,8 @@ Score: <integer>"""
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 
-def load_api_clients(cfg_path: Path) -> list[tuple[str, OpenAI]]:
-    """从 api_config.yaml 加载 judge_models，返回 [(model_name, client), ...]。"""
+def load_api_clients(cfg_path: Path) -> list[tuple[str, OpenAI, dict]]:
+    """从 api_config.yaml 加载 judge_models，返回 [(model_name, client, model_cfg), ...]。"""
     cfg = yaml.safe_load(cfg_path.read_text())
     blsc_cfg = cfg.get('blsc', {})
     clients = []
@@ -112,21 +112,25 @@ def load_api_clients(cfg_path: Path) -> list[tuple[str, OpenAI]]:
         api_name = entry.get('api', 'blsc')
         api_cfg = cfg.get(api_name, blsc_cfg)
         client = OpenAI(api_key=api_cfg['api_key'], base_url=api_cfg['base_url'])
-        clients.append((model, client))
+        model_cfg = {
+            'max_tokens': entry.get('max_tokens', 300),
+            'disable_thinking': entry.get('disable_thinking', False),
+        }
+        clients.append((model, client, model_cfg))
     if not clients:
-        # fallback 到 default
         default = cfg.get('default', 'blsc')
         api_cfg = cfg.get(default, blsc_cfg)
         model = api_cfg.get('model', 'GPT-5.2')
-        clients.append((model, OpenAI(api_key=api_cfg['api_key'], base_url=api_cfg['base_url'])))
+        clients.append((model, OpenAI(api_key=api_cfg['api_key'], base_url=api_cfg['base_url']), {'max_tokens': 300, 'disable_thinking': False}))
     return clients
 
 
 def parse_score(text: str) -> float | None:
-    m = re.search(r'Score:\s*([1-5])', text or '', re.IGNORECASE)
-    if m:
-        return float(m.group(1))
-    # fallback: 找孤立数字
+    # 取最后一个 "Score: X"，避免思维链中间值干扰
+    matches = re.findall(r'Score:\s*([1-5])', text or '', re.IGNORECASE)
+    if matches:
+        return float(matches[-1])
+    # fallback：取文本最后出现的孤立数字 1-5
     for ch in reversed(text or ''):
         if ch in '12345':
             return float(ch)
@@ -134,15 +138,20 @@ def parse_score(text: str) -> float | None:
 
 
 def call_judge(client: OpenAI, model: str, prompt: str,
-               timeout: int = 90, max_retries: int = 3) -> str:
+               timeout: int = 90, max_retries: int = 3,
+               max_tokens: int = 300, disable_thinking: bool = False) -> str:
+    extra = {}
+    if disable_thinking:
+        extra['extra_body'] = {'thinking': {'type': 'disabled'}}
     for attempt in range(1, max_retries + 1):
         try:
             resp = client.chat.completions.create(
                 model=model,
                 messages=[{'role': 'user', 'content': prompt}],
                 temperature=0.2,
-                max_tokens=120,
+                max_tokens=max_tokens,
                 timeout=timeout,
+                **extra,
             )
             return (resp.choices[0].message.content or '').strip()
         except Exception as e:
@@ -153,13 +162,15 @@ def call_judge(client: OpenAI, model: str, prompt: str,
             time.sleep(wait)
 
 
-def score_item(clients: list[tuple[str, OpenAI]], prompt: str,
+def score_item(clients: list[tuple[str, OpenAI, dict]], prompt: str,
                timeout: int) -> dict:
-    """用所有模型打分，返回 {model: {raw, score}, ..., ensemble_score}。"""
+    """用所有模型打分，返回 {per_model: {model: {raw, score}}, ensemble_score}。"""
     per_model = {}
     valid_scores = []
-    for model, client in clients:
-        raw = call_judge(client, model, prompt, timeout=timeout)
+    for model, client, model_cfg in clients:
+        raw = call_judge(client, model, prompt, timeout=timeout,
+                         max_tokens=model_cfg.get('max_tokens', 300),
+                         disable_thinking=model_cfg.get('disable_thinking', False))
         s = parse_score(raw)
         per_model[model] = {'raw': raw, 'score': s}
         if s is not None:
@@ -217,7 +228,7 @@ def main():
     args = parser.parse_args()
 
     clients = load_api_clients(Path(args.api_config))
-    model_names = [m for m, _ in clients]
+    model_names = [m for m, _, _ in clients]
     print(f'Judge 模型: {model_names}')
 
     out = Path(args.output_dir)
@@ -236,14 +247,11 @@ def main():
     for src, resp_key in source_response_key.items():
         src_out = out / f'{src}_scores.json'
         results = load_existing(src_out)
-        done_ids = {x['item_id'] for x in results}
+        results_by_id = {x['item_id']: x for x in results}
         print(f'\n[{src}] 已完成 {len(results)} 条')
 
         for conv in parallel:
             conv_id = conv['conv_id']
-            if conv_id in done_ids:
-                print(f'  skip {conv_id}')
-                continue
 
             dialogue_lines = []
             for turn in conv['turns']:
@@ -260,15 +268,33 @@ def main():
                 personality=conv['personality'],
                 dialogue='\n'.join(dialogue_lines),
             )
-            result = score_item(clients, prompt, args.timeout)
-            results.append({
-                'item_id': conv_id,
-                'source': src,
-                'num_turns': conv['num_turns'],
-                **result,
-            })
+
+            if conv_id in results_by_id:
+                # 按模型粒度续传：只补分数为 None 的模型
+                existing = results_by_id[conv_id]
+                missing = [(m, c, cfg) for m, c, cfg in clients
+                           if existing.get('per_model', {}).get(m, {}).get('score') is None]
+                if not missing:
+                    print(f'  skip {conv_id} (all models done)')
+                    continue
+                print(f'  retry {conv_id} missing={[m for m,_,_ in missing]}')
+                partial = score_item(missing, prompt, args.timeout)
+                existing.setdefault('per_model', {}).update(partial['per_model'])
+                valid = [v['score'] for v in existing['per_model'].values()
+                         if v.get('score') is not None]
+                existing['ensemble_score'] = round(sum(valid) / len(valid), 3) if valid else None
+            else:
+                result = score_item(clients, prompt, args.timeout)
+                entry = {
+                    'item_id': conv_id,
+                    'source': src,
+                    'num_turns': conv['num_turns'],
+                    **result,
+                }
+                results.append(entry)
+                results_by_id[conv_id] = entry
             src_out.write_text(json.dumps(results, indent=2, ensure_ascii=False))
-            print(f'  [{src}] {conv_id} → {result["ensemble_score"]}')
+            print(f'  [{src}] {conv_id} → {results_by_id[conv_id].get("ensemble_score")}')
 
         all_results[src] = results
 

@@ -21,5 +21,7 @@ default: "blsc"
 judge_models:
   - model: "GPT-5.4"
     api: "blsc"
-  - model: "GLM-5.1"
+    max_tokens: 300
+  - model: "Gemini-3.1-Pro-Preview"
     api: "blsc"
+    max_tokens: 2000
