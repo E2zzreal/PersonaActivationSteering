@@ -20,6 +20,7 @@ sys.path.insert(0, str(project_root))
 
 from src.data.aloe_dataset import ALOEDataset
 from src.data.collator import PersonaSteerCollator
+from src.data.grouped_sampler import PersonalityGroupedSampler
 from src.models.persona_steer import PersonaSteerModel, PersonaSteerConfig
 from src.training.trainer import PersonaSteerTrainer
 
@@ -126,6 +127,7 @@ def create_model(config: dict, device: str = None) -> PersonaSteerModel:
     logger.info(f"Backbone hidden_size: {actual_layer_dim}")
 
     # 使用 PersonaSteerConfig 创建配置
+    training_config = config.get("training", {})
     persona_config = PersonaSteerConfig(
         inject_layers=model_config.get("inject_layers", [14, 15, 16, 17, 18]),
         v_dim=model_config.get("v_dim", 1024),
@@ -134,6 +136,8 @@ def create_model(config: dict, device: str = None) -> PersonaSteerModel:
         gate_hidden_dim=model_config.get("gate_hidden_dim", 256),
         dropout=model_config.get("dropout", 0.1),
         use_layer_embedding=model_config.get("use_layer_embedding", True),
+        gate_init_bias=training_config.get("gate_init_bias", -2.0),
+        gate_max=training_config.get("gate_max", 1.0),
     )
 
     # 加载 encoder 和 tokenizer
@@ -234,15 +238,35 @@ def create_dataloaders(config: dict, args: argparse.Namespace) -> tuple[DataLoad
     # Collator
     collator = PersonaSteerCollator(tokenizer, max_turns=max_turns)
 
-    # 训练数据加载器
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        collate_fn=collator,
-        num_workers=data_config.get("num_workers", 2),
-        pin_memory=True,
-    )
+    # 判断是否需要 personality-grouped sampling（SCL 需要同 personality 正例对）
+    training_cfg = config.get("training", {})
+    scl_weight = training_cfg.get("scl_weight", 0.0)
+    use_grouped = scl_weight > 0 and batch_size > 1
+
+    if use_grouped:
+        logger.info(f"SCL enabled (weight={scl_weight}), using PersonalityGroupedSampler")
+        train_sampler = PersonalityGroupedSampler(
+            data_path=train_data_path,
+            batch_size=batch_size,
+            shuffle=True,
+            seed=config.get("seed", 42),
+        )
+        train_loader = DataLoader(
+            train_dataset,
+            batch_sampler=train_sampler,
+            collate_fn=collator,
+            num_workers=data_config.get("num_workers", 2),
+            pin_memory=True,
+        )
+    else:
+        train_loader = DataLoader(
+            train_dataset,
+            batch_size=batch_size,
+            shuffle=True,
+            collate_fn=collator,
+            num_workers=data_config.get("num_workers", 2),
+            pin_memory=True,
+        )
 
     # 评估数据加载器 (可选)
     eval_loader = None

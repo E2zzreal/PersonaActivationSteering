@@ -118,6 +118,8 @@ class SteeringInjection(nn.Module):
         layer_dim: int = 2560,
         gate_hidden_dim: int = 256,
         dropout: float = 0.1,
+        gate_init_bias: float = -2.0,
+        gate_max: float = 1.0,
     ):
         super().__init__()
         self.inject_layers = inject_layers
@@ -130,8 +132,8 @@ class SteeringInjection(nn.Module):
             v_dim,
             self.num_inject_layers,
             gate_hidden_dim,
-            gate_max=1.0,
-            gate_init_bias=-2.0,
+            gate_max=gate_max,
+            gate_init_bias=gate_init_bias,
         )
 
         # 各注入层的投影器

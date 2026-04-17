@@ -38,6 +38,8 @@ class PersonaSteerConfig:
     inject_layers: List[int] = None
     layer_dim: int = 2048  # Qwen2.5-3B hidden_size
     gate_hidden_dim: int = 256
+    gate_init_bias: float = -2.0
+    gate_max: float = 1.0
     dropout: float = 0.1
     backbone_model_name: str = "Qwen/Qwen2.5-3B"
     encoder_model_name: str = "Qwen/Qwen2.5-3B"
@@ -116,6 +118,8 @@ class PersonaSteerModel(nn.Module):
             layer_dim=self.layer_dim,
             gate_hidden_dim=config.gate_hidden_dim,
             dropout=config.dropout,
+            gate_init_bias=config.gate_init_bias,
+            gate_max=config.gate_max,
         )
 
         # Hook 句柄列表
@@ -202,6 +206,8 @@ class PersonaSteerModel(nn.Module):
             layer_dim=self.layer_dim,
             gate_hidden_dim=self.config.gate_hidden_dim,
             dropout=self.config.dropout,
+            gate_init_bias=self.config.gate_init_bias,
+            gate_max=self.config.gate_max,
         )
 
         # 注册 hooks

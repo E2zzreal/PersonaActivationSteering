@@ -31,7 +31,13 @@ gate_max=gate_max,
 gate_init_bias=gate_init_bias,
 ```
 
-**状态**: 🔴 待修复
+**状态**: ✅ 已修复 (2026-04-17)
+
+**修复内容**:
+- `PersonaSteerConfig` 新增 `gate_init_bias` / `gate_max` 字段
+- `SteeringInjection.__init__` 接受并传递这两个参数给 `DynamicGate`
+- `train.py` 从 YAML `training.gate_init_bias` / `training.gate_max` 读取并传入
+- 完整传递链：YAML → train.py → PersonaSteerConfig → PersonaSteerModel → SteeringInjection → DynamicGate
 
 ---
 
@@ -133,7 +139,8 @@ FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated.
 
 | 优先级 | 问题 | 影响 | 预计时间 |
 |--------|------|------|---------|
-| P0 | Gate Init Bias 硬编码 | 高 | 30分钟 |
+| P0 | Gate Init Bias 硬编码 | 高 | ✅ 已修复 |
+| P0 | SCL batch_size=1 失效 | 高 | ✅ 已修复 |
 | P0 | 模型生成空回复 | 高 | 2-4小时 |
 | P1 | Activation Steering 效果 | 中 | 1-2天 |
 | P2 | 配置混乱 | 低 | 2-3小时 |
