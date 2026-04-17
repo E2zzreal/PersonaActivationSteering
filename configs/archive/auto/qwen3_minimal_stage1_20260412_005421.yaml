@@ -1,0 +1,43 @@
+base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+data:
+  batch_size: 1
+  eval_path: data/split/val.jsonl
+  max_turns: 6
+  num_workers: 2
+  tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+  train_path: data/split/train.jsonl
+debug: false
+device: cuda:1
+model:
+  hidden_dim: 4096
+  inject_layers:
+  - 0
+  - 3
+  - 10
+  - 11
+  - 15
+  - 28
+  layer_dim: 2560
+  num_inject_layers: 6
+  use_layer_embedding: true
+  v_dim: 1024
+  v_norm_clip: null
+  v_norm_target: 32.0
+  v_norm_weight: 0.01
+seed: 42
+training:
+  injected_loss_weight: 0.5
+  learning_rate: 0.0001
+  log_interval: 10
+  max_grad_norm: 1.0
+  num_epochs: 4
+  output_dir: checkpoints/stage1_qwen3_probing_minimal
+  save_interval: 1
+  scl_weight: 0.0
+  sft_weight: 1.0
+  stage: 1
+  temperature: 0.07
+  use_amp: true
+  use_dual_loss: false
+  warmup_steps: 100
+  weight_decay: 0.01
