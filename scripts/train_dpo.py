@@ -171,7 +171,9 @@ def load_model(sft_checkpoint: str, base_model_path: str, device: str,
     backbone_cfg = AutoConfig.from_pretrained(base_model_path, trust_remote_code=True)
     backbone = AutoModelForCausalLM.from_pretrained(
         base_model_path, trust_remote_code=True,
-        torch_dtype=torch.float16, device_map={"": dev_id}, use_cache=False)
+        torch_dtype=torch.float16, device_map={"": dev_id}, use_cache=False,
+        attn_implementation="eager",  # 禁用 flash_attention varlen 模式，避免 seq_len=0
+    )
     tokenizer = AutoTokenizer.from_pretrained(base_model_path, trust_remote_code=True)
 
     config = PersonaSteerConfig(
