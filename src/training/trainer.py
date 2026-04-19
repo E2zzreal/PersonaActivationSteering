@@ -309,7 +309,9 @@ class PersonaSteerTrainer:
 
                 # 只在 Stage 3 计算对比损失（SCL），避免不必要的 GPU 内存开销
                 if self.stage >= 3:
-                    loss_scl = self.loss_fn.scl(v_t, valid_personalities, user_ids=valid_user_ids)
+                    # 注意：不传 user_ids，因为 ALOE 中 user_id 唯一，
+                    # 应该用 personality 字符串匹配（grouped sampler 保证同组）
+                    loss_scl = self.loss_fn.scl(v_t, valid_personalities)
                 else:
                     loss_scl = torch.tensor(0.0, device=self.device)
 
