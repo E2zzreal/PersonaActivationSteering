@@ -169,8 +169,9 @@ def load_model(sft_checkpoint: str, base_model_path: str, device: str,
         layer_dim=backbone_cfg.hidden_size,
         gate_hidden_dim=256, gate_init_bias=-2.0, gate_max=1.0,
     )
-    model = PersonaSteerModel(config=config, backbone=backbone, encoder=backbone.model)
+    model = PersonaSteerModel(config=config, encoder=backbone.model)
     model.hyper_network._tokenizer = tokenizer
+    model.set_backbone(backbone)  # 注册注入 hooks（关键！否则 injection 不生效）
 
     # Load SFT weights
     dev_obj = torch.device(device)
