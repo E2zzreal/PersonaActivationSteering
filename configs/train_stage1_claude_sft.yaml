@@ -1,0 +1,66 @@
+# PersonaSteer Stage 1 训练配置 - Claude SFT 验证实验
+# 数据：661 条 Claude 生成多轮对话（来自 val set）
+# 目标：验证 Claude 数据能否突破 Qwen3 baseline（2.833）
+
+# 模型配置
+model:
+  # B1 归因实验推荐：前层 [4..11] 优于中层 [8..15]
+  inject_layers: [4, 5, 6, 7, 8, 9, 10, 11]
+  v_dim: 1024
+  hidden_dim: 4096
+  layer_dim: 2560  # Qwen3-4B hidden_size
+  v_norm_clip: null  # 禁用hard clip，改用soft constraint
+  v_norm_weight: 0.01  # v_norm正则化权重
+  v_norm_target: 32.0  # 目标v_norm值，与LayerNorm自然输出匹配(√v_dim=√1024=32)
+  num_inject_layers: 8  # 注入层数量
+  use_layer_embedding: true  # 使用层嵌入
+
+# 模型路径
+base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+
+# 数据配置
+data:
+  tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+  train_path: data/claude_sft/train.jsonl   # Claude 生成数据（661 条）
+  eval_path: data/split/val.jsonl
+  max_turns: 5   # 并行对话最多 5 轮
+  batch_size: 1
+  num_workers: 2
+
+# 训练配置
+training:
+  # 阶段标识 (1: 仅 HyperNetwork, 2: 联合训练, 3: +对比学习)
+  stage: 1
+
+  # 训练参数
+  num_epochs: 6   # 数据量少（661），多跑几 epoch
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+
+  # 损失权重
+  sft_weight: 1.0
+  scl_weight: 0.0  # Stage 1 不使用对比损失
+  temperature: 0.07
+
+  # 优化器
+  warmup_steps: 50   # 数据量少，warmup 适当减少
+
+  # 混合精度
+  use_amp: true
+
+  # Checkpoint 保存
+  output_dir: checkpoints/stage1_claude_sft
+  save_interval: 1
+
+  # 日志
+  log_interval: 10
+
+  # 双loss训练配置
+  use_dual_loss: false
+  injected_loss_weight: 0.5
+
+# 设备配置
+device: cuda:2
+seed: 42
+debug: false
