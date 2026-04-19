@@ -1,0 +1,26 @@
+# PersonaSteer DPO 训练配置 - 小规模验证（661 条偏好对）
+
+base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+
+model:
+  inject_layers: [4, 5, 6, 7, 8, 9, 10, 11]
+  v_dim: 1024
+  hidden_dim: 4096
+  gate_hidden_dim: 256
+  gate_init_bias: -2.0
+  gate_max: 1.0
+
+data:
+  train_path: data/claude_dpo/train.jsonl   # 3305 条偏好对
+  batch_size: 2
+  max_length: 512
+
+training:
+  beta: 0.1               # DPO 温度，控制与参考模型的偏离程度
+  num_epochs: 3
+  learning_rate: 0.00005  # 比 SFT 低，DPO 更新幅度应小
+  output_dir: checkpoints/dpo_claude_small
+  log_interval: 50
+
+device: cuda:0
+seed: 42
