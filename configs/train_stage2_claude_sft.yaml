@@ -1,0 +1,66 @@
+# PersonaSteer Stage 2 训练配置 - Claude SFT 数据
+# 解冻 gate，联合训练 HyperNetwork + Gate + SCL（已修复 grouped sampler）
+
+# 模型配置
+model:
+  inject_layers: [4, 5, 6, 7, 8, 9, 10, 11]  # B1 归因推荐前层
+  v_dim: 1024
+  hidden_dim: 4096
+  layer_dim: 2560
+  v_norm_weight: 0.01
+  v_norm_target: 32.0
+  num_inject_layers: 8
+  use_layer_embedding: true
+
+# 模型路径
+base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+
+# Stage 1 checkpoint（Claude SFT）
+stage1_checkpoint: checkpoints/stage1_claude_sft/best.pt
+
+# 数据配置
+data:
+  tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+  train_path: data/claude_sft/train.jsonl     # 661 条 Claude 数据
+  eval_path: data/split/val.jsonl
+  max_turns: 5
+  batch_size: 4   # grouped sampler 保证同 personality 正例对
+  num_workers: 2
+
+# 训练配置
+training:
+  stage: 2
+
+  num_epochs: 6    # 数据量少，多跑
+  learning_rate: 0.00005
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+
+  # 损失权重
+  sft_weight: 1.0
+  scl_weight: 0.1     # SCL 现在真正生效（grouped sampler）
+  temperature: 0.07
+
+  # Gate 约束（P0-1 已修复，YAML 值现在真正生效）
+  gate_min_value: 0.0
+  gate_reg_weight: 0.01
+  gate_max: 1.0
+  gate_init_bias: -2.0
+
+  # v_norm 约束
+  v_norm_weight: 0.1
+  v_norm_target: 5.0
+
+  warmup_steps: 30
+  use_amp: true
+
+  output_dir: checkpoints/stage2_claude_sft
+  save_interval: 1
+  log_interval: 10
+
+  use_dual_loss: false
+  injected_loss_weight: 0.5
+
+device: cuda:1
+seed: 42
+debug: false
