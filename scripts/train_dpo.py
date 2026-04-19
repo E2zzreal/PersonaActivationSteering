@@ -130,9 +130,11 @@ def compute_logprobs(model: PersonaSteerModel, input_ids: torch.Tensor,
     v_prev = torch.zeros(batch_size, model.v_dim, device=device)
 
     # Step 1: 生成干预向量
+    # 注意：user_query_texts 不能传空字符串 ""，Qwen3 tokenizer 将其编码为 seq_len=0
+    # 导致 encoder 处理空序列时 attention 崩溃，用 personality 本身作为 query 代理
     model.injection.injection_enabled = False
     v_t_layers, _, _ = model.hyper_network(
-        personalities, [""] * len(personalities), v_prev)
+        personalities, personalities, v_prev)
     model.injection.injection_enabled = True
 
     # Step 2: 设置注入向量（hooks 会在 backbone forward 时触发注入）
