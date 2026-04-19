@@ -120,19 +120,34 @@ def collate_fn(batch, pad_id: int):
 def compute_logprobs(model: PersonaSteerModel, input_ids: torch.Tensor,
                      labels: torch.Tensor, personalities: list[str],
                      profiles: list[str]) -> torch.Tensor:
-    """计算每个样本的 sum log p(y|x)，仅对 labels != -100 的 token 求和"""
-    device = input_ids.device
-    batch_size = input_ids.size(0)
-    v_prev = torch.zeros(batch_size, model.v_dim, device=device)
-    user_queries = ["" for _ in personalities]
+    """计算每个样本的 sum log p(y|x)，仅对 labels != -100 的 token 求和。
 
-    logits, _, _ = model(
+    绕过 PersonaSteerModel.forward()，直接控制注入后调用 backbone，
+    并显式传 position_ids 以避免 Qwen3 varlen attention 的 seq_len=0 问题。
+    """
+    device = input_ids.device
+    batch_size, seq_len = input_ids.shape
+    v_prev = torch.zeros(batch_size, model.v_dim, device=device)
+
+    # Step 1: 生成干预向量
+    model.injection.injection_enabled = False
+    v_t_layers, _, _ = model.hyper_network(
+        personalities, [""] * len(personalities), v_prev)
+    model.injection.injection_enabled = True
+
+    # Step 2: 设置注入向量（hooks 会在 backbone forward 时触发注入）
+    model.injection.set_intervention_vector(v_t_layers)
+
+    # Step 3: 显式 position_ids，避免 Qwen3 内部 varlen 逻辑误判 seq_len=0
+    position_ids = torch.arange(seq_len, device=device).unsqueeze(0).expand(batch_size, -1)
+
+    outputs = model.backbone(
         input_ids=input_ids,
-        v_prev=v_prev,
-        personality_texts=personalities,
-        user_query_texts=user_queries,
-        attention_mask=(input_ids != model.backbone.config.eos_token_id).long(),
-    )  # (batch, seq, vocab)
+        attention_mask=None,
+        position_ids=position_ids,
+        use_cache=False,
+    )
+    logits = outputs.logits  # (batch, seq, vocab)
 
     # shift: logits[i] predicts token[i+1]
     shift_logits = logits[:, :-1, :]   # (batch, seq-1, vocab)
