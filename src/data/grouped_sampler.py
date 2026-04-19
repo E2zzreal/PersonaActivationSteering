@@ -1,12 +1,12 @@
 """
 Personality-Grouped Sampler for contrastive learning.
 
-Ensures each batch contains samples from the same personality group,
-so that SupervisedContrastiveLoss can find positive pairs.
+Ensures each batch contains samples from MULTIPLE personality groups,
+so that SupervisedContrastiveLoss has both positive pairs (same personality)
+and negative pairs (different personalities).
 
-Strategy: each batch is composed of `group_size` samples from the same
-personality, repeated until `batch_size` is filled. Across batches,
-personalities are cycled in a round-robin fashion with shuffling.
+Strategy: each batch combines `group_size` samples from each of
+`num_groups` different personalities, yielding `batch_size = group_size * num_groups`.
 """
 
 import json
@@ -19,16 +19,23 @@ from torch.utils.data import Sampler
 
 
 class PersonalityGroupedSampler(Sampler[list[int]]):
-    """Batch sampler that groups samples by personality.
+    """Batch sampler that mixes multiple personality groups per batch.
 
-    Each yielded batch is a list of dataset indices that share the same
-    personality string (or at least `group_size` of them do).
+    Each yielded batch contains samples from `num_groups` different
+    personalities, with `group_size` samples per personality.
+    This provides both positive pairs (same personality) and
+    negative pairs (different personalities) for contrastive learning.
+
+    Example with batch_size=4, group_size=2:
+      batch = [personA_idx1, personA_idx2, personB_idx1, personB_idx2]
+      → positive pairs: (A1,A2), (B1,B2)
+      → negative pairs: (A1,B1), (A1,B2), (A2,B1), (A2,B2)
 
     Args:
         data_path: Path to the JSONL data file (same as ALOEDataset).
-        batch_size: Total batch size.
-        group_size: Minimum number of same-personality samples per batch.
-            Defaults to batch_size (entire batch from one personality).
+        batch_size: Total batch size. Must be divisible by group_size.
+        group_size: Number of same-personality samples per group.
+            Defaults to 2 (minimum for positive pairs).
         shuffle: Whether to shuffle personalities and samples each epoch.
         seed: Random seed for reproducibility.
     """
@@ -37,15 +44,22 @@ class PersonalityGroupedSampler(Sampler[list[int]]):
         self,
         data_path: str | Path,
         batch_size: int = 4,
-        group_size: int | None = None,
+        group_size: int = 2,
         shuffle: bool = True,
         seed: int = 42,
     ):
         self.batch_size = batch_size
-        self.group_size = group_size or batch_size
+        self.group_size = group_size
+        self.num_groups = batch_size // group_size
         self.shuffle = shuffle
         self.seed = seed
         self.epoch = 0
+
+        assert batch_size % group_size == 0, \
+            f"batch_size ({batch_size}) must be divisible by group_size ({group_size})"
+        assert self.num_groups >= 2, \
+            f"Need at least 2 personality groups per batch for contrastive learning, " \
+            f"got {self.num_groups} (batch_size={batch_size}, group_size={group_size})"
 
         # Build personality -> [index] mapping
         self.personality_to_indices: dict[str, list[int]] = defaultdict(list)
@@ -57,44 +71,62 @@ class PersonalityGroupedSampler(Sampler[list[int]]):
                 p = item.get("personality", "")
                 self.personality_to_indices[p].append(idx)
 
-        self._total = sum(len(v) for v in self.personality_to_indices.values())
+        # Only keep personalities with enough samples
+        self.valid_personalities = [
+            p for p, idxs in self.personality_to_indices.items()
+            if len(idxs) >= group_size
+        ]
+        self._total = sum(len(self.personality_to_indices[p])
+                         for p in self.valid_personalities)
 
     def __iter__(self) -> Iterator[list[int]]:
         rng = random.Random(self.seed + self.epoch)
         self.epoch += 1
 
         # Shuffle indices within each personality group
-        groups: dict[str, list[int]] = {}
-        for p, indices in self.personality_to_indices.items():
-            idxs = indices.copy()
+        queues: dict[str, list[int]] = {}
+        for p in self.valid_personalities:
+            idxs = self.personality_to_indices[p].copy()
             if self.shuffle:
                 rng.shuffle(idxs)
-            groups[p] = idxs
+            queues[p] = idxs
 
-        # Round-robin across personalities, yielding batches
-        personality_keys = list(groups.keys())
-        if self.shuffle:
-            rng.shuffle(personality_keys)
+        pointers = {p: 0 for p in self.valid_personalities}
 
-        # Build batches: take group_size from one personality at a time
+        # Track which personalities still have enough samples
+        active = set(self.valid_personalities)
+
         batches: list[list[int]] = []
-        pointers = {p: 0 for p in personality_keys}
 
-        while True:
-            made_progress = False
-            for p in personality_keys:
+        while len(active) >= self.num_groups:
+            # Pick num_groups different personalities
+            selected = rng.sample(sorted(active), self.num_groups)
+
+            batch = []
+            exhausted = []
+            for p in selected:
                 ptr = pointers[p]
-                idxs = groups[p]
-                if ptr >= len(idxs):
+                end = ptr + self.group_size
+                idxs = queues[p]
+
+                if end > len(idxs):
+                    # Not enough samples left for this personality
+                    exhausted.append(p)
                     continue
-                end = min(ptr + self.batch_size, len(idxs))
-                batch = idxs[ptr:end]
-                if len(batch) >= 2:  # Need at least 2 for contrastive
-                    batches.append(batch)
-                    made_progress = True
+
+                batch.extend(idxs[ptr:end])
                 pointers[p] = end
-            if not made_progress:
-                break
+
+                # Check if personality is exhausted for future batches
+                if end + self.group_size > len(idxs):
+                    exhausted.append(p)
+
+            # Only yield if we got samples from at least 2 personalities
+            if len(batch) >= self.group_size * 2:
+                batches.append(batch)
+
+            for p in exhausted:
+                active.discard(p)
 
         if self.shuffle:
             rng.shuffle(batches)
@@ -102,11 +134,8 @@ class PersonalityGroupedSampler(Sampler[list[int]]):
         yield from batches
 
     def __len__(self) -> int:
-        # Approximate number of batches
-        count = 0
-        for indices in self.personality_to_indices.values():
-            count += max(1, len(indices) // self.batch_size)
-        return count
+        # Approximate: total samples / batch_size
+        return self._total // self.batch_size
 
     def set_epoch(self, epoch: int) -> None:
         """Set epoch for shuffling determinism."""
