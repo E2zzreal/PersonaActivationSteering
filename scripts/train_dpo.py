@@ -137,12 +137,20 @@ def compute_logprobs(model: PersonaSteerModel, input_ids: torch.Tensor,
     )  # (batch, seq, vocab)
 
     # shift: logits[i] predicts token[i+1]
-    shift_logits = logits[:, :-1, :]   # (batch, seq-1, vocab)
-    shift_labels = labels[:, 1:]        # (batch, seq-1)
+    shift_logits = logits[:, :-1, :].contiguous()   # (batch, seq-1, vocab)
+    shift_labels = labels[:, 1:].contiguous()        # (batch, seq-1)
 
-    log_probs = F.log_softmax(shift_logits.float(), dim=-1)  # (batch, seq-1, vocab)
-    token_log_probs = log_probs.gather(
-        2, shift_labels.clamp(min=0).unsqueeze(-1)).squeeze(-1)  # (batch, seq-1)
+    # 用 cross_entropy 的 fused kernel，避免实体化完整 (batch, seq, vocab) 的 softmax
+    batch_size_local = shift_logits.size(0)
+    seq_len_local = shift_logits.size(1)
+    per_token_loss = F.cross_entropy(
+        shift_logits.view(-1, shift_logits.size(-1)),
+        shift_labels.clamp(min=0).view(-1),
+        reduction='none',
+    ).view(batch_size_local, seq_len_local)  # (batch, seq-1)
+
+    # cross_entropy = -log_softmax[label]，所以 log_prob = -cross_entropy
+    token_log_probs = -per_token_loss
 
     mask = (shift_labels != -100).float()
     sum_log_probs = (token_log_probs * mask).sum(dim=-1)  # (batch,)
@@ -159,7 +167,6 @@ def load_model(sft_checkpoint: str, base_model_path: str, device: str,
     backbone = AutoModelForCausalLM.from_pretrained(
         base_model_path, trust_remote_code=True,
         torch_dtype=torch.float16, device_map={"": dev_id}, use_cache=False,
-        attn_implementation="eager",  # 禁用 flash_attention varlen 模式，避免 seq_len=0
     )
     tokenizer = AutoTokenizer.from_pretrained(base_model_path, trust_remote_code=True)
 

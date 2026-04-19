@@ -12,8 +12,8 @@ model:
 
 data:
   train_path: data/claude_dpo/train.jsonl   # 3305 条偏好对
-  batch_size: 2
-  max_length: 512
+  batch_size: 1
+  max_length: 256
 
 training:
   beta: 0.1               # DPO 温度，控制与参考模型的偏离程度
