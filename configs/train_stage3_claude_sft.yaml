@@ -37,7 +37,7 @@ training:
   max_grad_norm: 1.0
 
   sft_weight: 1.0
-  scl_weight: 0.1
+  scl_weight: 1.0     # 从 0.1 → 1.0，使 SCL（~1.09）接近 SFT（~1.94）
   temperature: 0.15      # Stage3 温度略高
 
   gate_min_value: 0.0
