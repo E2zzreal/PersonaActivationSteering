@@ -277,7 +277,7 @@ class PersonaSteerTrainer:
                 # 传递 Big Five 分数（如果有）
                 big5 = batch.get("big5_scores")
                 if big5 is not None:
-                    big5 = big5[valid_idx].to(self.device)
+                    big5 = big5.to(self.device)[valid_idx]
 
                 with amp_autocast if amp_autocast else torch.enable_grad():
                     logits, v_t, v_norm = self.model(
