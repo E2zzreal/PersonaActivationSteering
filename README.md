@@ -4,52 +4,72 @@
 
 ---
 
-## 项目状态（2026-04-17）
+## 项目状态（2026-04-20）
 
 ### 核心发现
 
-三源并行评估（严格 rubric，GPT-5.4 + Gemini 集成）确认：
-
-| 来源 | 人格对齐分 | 说明 |
+| 实验 | 分数 | 结论 |
 |------|---:|------|
-| Claude-Opus-4.6 | **3.833** | 教师模型上限 |
-| Qwen3-4B baseline | 2.833 | 无注入基准 |
-| ALOE gold（当前训练数据） | 2.600 | **低于 baseline** |
+| Claude-Opus-4.6 生成 | 4.000 | 教师模型上限 |
+| **Stage2 (Claude SFT + gate)** | **3.033** | 当前最佳 |
+| Stage1 (Claude SFT) | 3.000 | 突破 baseline |
+| 诊断 A1 (Embedding Table) | 3.000 | 注入机制不是瓶颈 |
+| 诊断 B (gate=50%) | 3.000 | gate 强度不是瓶颈 |
+| Qwen3-4B baseline | 2.833 | — |
+| ALOE gold | 2.600 | 训练数据质量最差 |
 
-**根本结论**：训练数据上限（2.6）低于模型自然输出水平（2.83），是注入增益有限的根因，而非注入机制本身的问题。
+**瓶颈确认链**：
+```
+注入机制不是瓶颈（A1/B 诊断排除）
+→ Claude 质量不是瓶颈（prompt 试验排除，已 4.0）
+→ encoder 区分度不足（57 personality 余弦相似度 0.961）
+  + SFT 目标无对比信号（所有 persona 向同一 Claude 风格拟合）
+→ 解决方案：Big Five 5D 分支 + 跨 persona 对比训练
+```
 
-### P0 修复状态
+### 双线并行
 
-| 问题 | 状态 |
-|------|------|
-| gate_init_bias/gate_max 硬编码，YAML 配置无效 | ✅ 已修复 |
-| batch_size=1 导致 SCL 永远返回 0 | ✅ 已修复（PersonalityGroupedSampler） |
-| ALOE 训练数据上限不足 | 进行中（Claude 数据重建，~661 条并行对话生成中） |
+| 线路 | 分支 | 状态 | 目标 |
+|------|------|------|------|
+| **Main** | `main` | 全量数据生成中（~50%） | Claude SFT 基础层 |
+| **Big Five** | `feature/big5-personality` | 架构+数据管道已完成 | 突破 3 分墙 |
 
-### 当前优先级
+### Bug 修复总结
 
-**D（数据）> E（评估）> L（损失）> I（注入）**
+| Bug | 影响 | 状态 |
+|-----|------|------|
+| gate_init_bias/gate_max 硬编码 | 配置无效 | ✅ |
+| SCL batch_size=1 返回 0 | 对比损失失效 | ✅ |
+| SCL user_ids 唯一 → pos_mask=0 | 对比损失失效 | ✅ |
+| grouped sampler 全同 personality | 无负例 | ✅ |
+| DPO 空字符串 / 未注册 hooks | 训练崩溃 | ✅ |
 
-最高优先级是用 Claude 生成的高质量多轮对话替换 ALOE 训练数据，将数据上限从 2.6 提升至 3.5+。
+**D（数据质量 + 训练目标）> E（评估）> L（损失）> I（注入机制）**
 
 ---
 
 ## 架构概述
 
 ```
-personality 描述
-      ↓
-  HyperNetwork          ← 编码器（共享 Qwen3-4B 权重，冻结）
-  (Qwen3-4B encoder     + 3层 ResidualMLP
-   + ResidualMLP)       → 生成干预向量 v_t（多层，每注入层独立）
-      ↓
-  DynamicGate           ← 根据 v_t 计算各层门控系数 g_i ∈ [0, gate_max]
-      ↓
-  SteeringInjection     ← h'_i = h_i + g_i * proj_i(v_t)
-      ↓
-  Qwen3-4B backbone     ← 冻结，通过 forward hook 注入
-      ↓
-    输出
+personality 描述 ──→ 冻结 Encoder ──→ z_personality ─┐
+                                                      │ (1-β)·z_enc + β·z_big5
+Big Five [O,C,E,A,N] ──→ big5_projector ──→ z_big5 ─┘
+                                                      ↓
+                         user query ──→ 冻结 Encoder ──→ z_query
+                                                      ↓
+                              Query-Aware Gate Fusion (α)
+                                                      ↓
+                              + v_prev (历史向量)
+                                                      ↓
+                              Projector MLP × 8 层 ──→ v_t (batch, 8, 1024)
+                                                      ↓
+                              DynamicGate ──→ g_i ∈ [0, gate_max]
+                                                      ↓
+                              SteeringInjection: h'_i = h_i + g_i · proj_i(v_t)
+                                                      ↓
+                              Qwen3-4B backbone (冻结, forward hook)
+                                                      ↓
+                                                    输出
 ```
 
 **可训练参数**：HyperNetwork + DynamicGate + layer projectors（约 47M，~1.2%）
@@ -278,12 +298,19 @@ ALOE 数据集统计：57 个唯一 personality，每个出现 48-61 次，总�
 
 | 文档 | 内容 |
 |------|------|
-| `docs/历史实验结论速查.md` | 所有历史实验关键数字一页速查 |
+| `docs/历史实验结论速查.md` | 所有历史实验关键数字一页速查（A-J 节） |
+| `docs/Big5人格分支设计文档_2026-04-20.md` | Big Five 5D 分支完整设计 |
 | `docs/三源人格对齐能力综合分析报告_2026-04-17.md` | 三源评估权威报告 |
-| `docs/P0修复与D层重建计划_2026-04-17.md` | 当前推进计划 |
+| `docs/P0修复与D层重建计划_2026-04-17.md` | P0 修复与数据重建 |
 | `docs/阶段结论补充说明_2026-04-16.md` | D>E>L>I 归因分析 |
-| `docs/evaluation/known_issues.md` | 已知问题记录 |
-| `docs/评估口径统一规范.md` | 评估标准说明 |
+| `docs/analysis/known_issues.md` | 已知问题记录 |
+
+### 分支说明
+
+| 分支 | 用途 |
+|------|------|
+| `main` | 稳定主线，ALOE/Claude SFT 数据管道 |
+| `feature/big5-personality` | Big Five 5D 人格实验分支 |
 
 ---
 
