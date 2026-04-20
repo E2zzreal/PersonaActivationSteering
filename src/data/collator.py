@@ -148,7 +148,15 @@ class PersonaSteerCollator:
             "attention_mask": torch.stack(padded_attention_mask),  # (num_turns, batch, seq_len)
             "user_texts": all_user_texts,  # list[list[str]]
             "user_ids": [sample["user_id"] for sample in batch],  # list[str]
-            "personalities": [sample["personality"] for sample in batch],  # list[str] - 【新增】
-            "profiles": [sample["profile"] for sample in batch],  # list[str] - 【新增】
+            "personalities": [sample["personality"] for sample in batch],  # list[str]
+            "profiles": [sample["profile"] for sample in batch],  # list[str]
+            "big5_scores": self._collect_big5(batch),  # (batch, 5) or None
             "num_turns": num_turns,  # list[int]
         }
+
+    def _collect_big5(self, batch: list[dict]) -> torch.Tensor | None:
+        """收集 batch 中的 Big Five 分数，如果任一样本没有则返回 None"""
+        scores = [sample.get("big5_scores") for sample in batch]
+        if all(s is not None for s in scores):
+            return torch.tensor(scores, dtype=torch.float32)
+        return None

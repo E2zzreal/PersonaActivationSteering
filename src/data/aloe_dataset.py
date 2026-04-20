@@ -135,5 +135,6 @@ class ALOEDataset(Dataset):
             "user_id": sample.get("user_id", f"u{idx}"),
             "profile": sample.get("profile", ""),
             "personality": sample.get("personality", ""),
+            "big5_scores": sample.get("big5_scores", None),  # [O,C,E,A,N] or None
             "turns": turns,
         }

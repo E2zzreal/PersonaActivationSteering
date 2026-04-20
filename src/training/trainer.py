@@ -274,12 +274,18 @@ class PersonaSteerTrainer:
                 valid_v_prev = v_prev[valid_idx]
 
                 # Forward (injected)
+                # 传递 Big Five 分数（如果有）
+                big5 = batch.get("big5_scores")
+                if big5 is not None:
+                    big5 = big5[valid_idx].to(self.device)
+
                 with amp_autocast if amp_autocast else torch.enable_grad():
                     logits, v_t, v_norm = self.model(
                         input_ids=valid_input_ids,
                         v_prev=valid_v_prev,
                         personality_texts=valid_personalities,
                         user_query_texts=valid_user_texts,
+                        big5_scores=big5,
                     )
 
                 # 计算注入后的损失
