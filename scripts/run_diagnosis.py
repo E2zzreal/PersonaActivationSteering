@@ -38,14 +38,14 @@ def setup_embedding_table(model, data_path: str, device: str):
     """实验 A1：用可学习 embedding table 替换 encoder"""
     p2idx = build_personality_index(data_path)
     num_p = len(p2idx)
-    v_dim = model.hyper_network.v_dim
+    # 用 encoder_dim（2560）而非 v_dim（1024），因为 encoder_projector 期望 encoder_dim 输入
+    encoder_dim = next(model.hyper_network.encoder.parameters()).shape[-1]
 
-    # 创建可学习 embedding（正交初始化，最大化初始区分度）
-    emb = torch.nn.Embedding(num_p, v_dim).to(device)
-    torch.nn.init.orthogonal_(emb.weight)
+    emb = torch.nn.Embedding(num_p, encoder_dim).to(device)
+    torch.nn.init.orthogonal_(emb.weight[:, :min(num_p, encoder_dim)])
     # 缩放到与 encoder 输出类似的 norm（~90）
     with torch.no_grad():
-        emb.weight.mul_(90.0 / emb.weight.norm(dim=1, keepdim=True))
+        emb.weight.mul_(90.0 / emb.weight.norm(dim=1, keepdim=True).clamp(min=1e-6))
 
     def embed_fn(personality_texts: list[str]) -> torch.Tensor:
         indices = torch.tensor([p2idx[p] for p in personality_texts], device=device)
@@ -54,7 +54,7 @@ def setup_embedding_table(model, data_path: str, device: str):
     model.hyper_network._personality_embed_fn = embed_fn
     # 注册为模型子模块以使其可训练
     model.hyper_network.personality_emb = emb
-    print(f"[A1] Embedding table: {num_p} personalities × {v_dim} dim")
+    print(f"[A1] Embedding table: {num_p} personalities × {encoder_dim} dim")
     return model
 
 
@@ -127,7 +127,6 @@ def main():
         train_loader=train_loader,
         eval_loader=eval_loader,
         device=args.device,
-        loss_fn=None,
     )
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
