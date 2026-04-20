@@ -95,7 +95,11 @@ def main():
             user_inputs.append(conv['turns'][0]['user_input'])
     # 补充更多（如果不够从 train.jsonl 取）
     if len(user_inputs) < args.n:
-        with open('data/split/train.jsonl') as f:
+        train_path = project_root / 'data' / 'split' / 'train.jsonl'
+        if not train_path.exists():
+            # worktree 中可能没有 data/，尝试主目录
+            train_path = Path('/home/kemove/Desktop/PersonaSteer/data/split/train.jsonl')
+        with open(train_path) as f:
             for line in f:
                 if len(user_inputs) >= args.n:
                     break

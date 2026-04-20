@@ -1,0 +1,54 @@
+# PersonaSteer Big Five 跨 persona 训练配置
+# 数据：16 个 Big Five personality × 跨 persona 对比数据
+# 目标：模型必须根据 big5_scores 区分不同 persona 的输出
+
+model:
+  inject_layers: [4, 5, 6, 7, 8, 9, 10, 11]
+  v_dim: 1024
+  hidden_dim: 4096
+  layer_dim: 2560
+  v_norm_weight: 0.01
+  v_norm_target: 32.0
+  num_inject_layers: 8
+  use_layer_embedding: true
+
+base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+
+data:
+  tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
+  train_path: data/big5_cross_persona/train.jsonl
+  eval_path: data/big5_cross_persona/train.jsonl   # 暂用同一份
+  max_turns: 1   # 跨 persona 数据是单轮
+  batch_size: 4   # mixed-personality batch
+  num_workers: 2
+
+training:
+  stage: 1   # 先 Stage1 验证
+
+  num_epochs: 10    # 数据量小（~200 条），多跑
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+
+  sft_weight: 1.0
+  scl_weight: 0.0   # Stage1 不用 SCL
+  temperature: 0.07
+
+  gate_init_bias: -1.0   # 更强注入（26%），因为 Big Five 信号更强
+  gate_max: 1.0
+
+  v_norm_weight: 0.1
+  v_norm_target: 5.0
+
+  warmup_steps: 20
+  use_amp: true
+
+  output_dir: checkpoints/big5_stage1
+  save_interval: 1
+  log_interval: 10
+
+  use_dual_loss: false
+
+device: cuda:0
+seed: 42
+debug: false
