@@ -83,6 +83,11 @@ class HyperNetwork(nn.Module):
         for param in self.encoder.parameters():
             param.requires_grad = False
 
+        # 可选：外部注入的 personality 编码函数，用于实验 A1/A2 替换冻结 encoder
+        # 设置方式：model.hyper_network._personality_embed_fn = some_fn
+        # 函数签名：(personality_texts: list[str]) -> torch.Tensor (batch, encoder_dim or v_dim)
+        self._personality_embed_fn: callable | None = None
+
     def encode_text(self, texts: list[str], tokenizer=None) -> torch.Tensor:
         """编码文本为向量
 
@@ -164,25 +169,28 @@ class HyperNetwork(nn.Module):
         # 【方案A】分离编码 personality 和 query
         encoder_device = next(self.encoder.parameters()).device
 
-        # 编码 personality
-        personality_inputs = tokenizer(
-            personality_texts,
-            padding=True,
-            truncation=True,
-            max_length=512,
-            return_tensors='pt',
-        )
-        personality_inputs = {k: v.to(encoder_device) for k, v in personality_inputs.items()}
-
-        with torch.no_grad():
-            personality_outputs = self.encoder(**personality_inputs)
-
-        if hasattr(personality_outputs, 'last_hidden_state'):
-            z_personality = personality_outputs.last_hidden_state.mean(dim=1)
-        elif hasattr(personality_outputs, 'pooler_output'):
-            z_personality = personality_outputs.pooler_output
+        # 编码 personality（支持外部 embed fn 覆盖）
+        if self._personality_embed_fn is not None:
+            z_personality = self._personality_embed_fn(personality_texts)
         else:
-            z_personality = personality_outputs.mean(dim=1)
+            personality_inputs = tokenizer(
+                personality_texts,
+                padding=True,
+                truncation=True,
+                max_length=512,
+                return_tensors='pt',
+            )
+            personality_inputs = {k: v.to(encoder_device) for k, v in personality_inputs.items()}
+
+            with torch.no_grad():
+                personality_outputs = self.encoder(**personality_inputs)
+
+            if hasattr(personality_outputs, 'last_hidden_state'):
+                z_personality = personality_outputs.last_hidden_state.mean(dim=1)
+            elif hasattr(personality_outputs, 'pooler_output'):
+                z_personality = personality_outputs.pooler_output
+            else:
+                z_personality = personality_outputs.mean(dim=1)
 
         # 编码 query
         query_inputs = tokenizer(
