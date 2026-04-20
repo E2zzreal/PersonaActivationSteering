@@ -244,8 +244,9 @@ class PersonaSteerModel(nn.Module):
         personality_texts: List[str],
         user_query_texts: List[str],
         attention_mask: Optional[torch.Tensor] = None,
+        big5_scores: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """前向传播 - 【方案A】Query-Aware + 【方案D】多层向量
+        """前向传播 - 【方案A】Query-Aware + 【方案D】多层向量 + 【Big Five】5D 分支
 
         Args:
             input_ids: 输入 token IDs (batch, seq_len)
@@ -263,7 +264,7 @@ class PersonaSteerModel(nn.Module):
         if self.hyper_network is not None:
             # 临时禁用 injection hooks（encoder 和 backbone 共享权重时，encoder forward 不应触发注入）
             self.injection.injection_enabled = False
-            v_t_layers, z_t, v_norm = self.hyper_network(personality_texts, user_query_texts, v_prev)  # 【方案A】传入两个文本
+            v_t_layers, z_t, v_norm = self.hyper_network(personality_texts, user_query_texts, v_prev, big5_scores=big5_scores)
             self.injection.injection_enabled = True
         else:
             # 如果没有超网络，使用零向量

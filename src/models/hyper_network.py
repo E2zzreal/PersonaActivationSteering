@@ -84,9 +84,21 @@ class HyperNetwork(nn.Module):
             param.requires_grad = False
 
         # 可选：外部注入的 personality 编码函数，用于实验 A1/A2 替换冻结 encoder
-        # 设置方式：model.hyper_network._personality_embed_fn = some_fn
-        # 函数签名：(personality_texts: list[str]) -> torch.Tensor (batch, encoder_dim or v_dim)
         self._personality_embed_fn: callable | None = None
+
+        # 【Big Five】5D 人格向量分支 - 绕过 encoder 瓶颈
+        # 当 big5_scores 传入时，此分支提供结构化的人格信号
+        # 与 encoder 输出相加，权重通过 big5_gate 自适应调节
+        self.big5_projector = nn.Sequential(
+            nn.Linear(5, v_dim // 4),
+            nn.SiLU(),
+            nn.Linear(v_dim // 4, v_dim),
+        )
+        # 自适应权重：控制 big5 信号 vs encoder 信号的比例
+        self.big5_gate = nn.Sequential(
+            nn.Linear(v_dim + 5, 1),
+            nn.Sigmoid(),
+        )
 
     def encode_text(self, texts: list[str], tokenizer=None) -> torch.Tensor:
         """编码文本为向量
@@ -141,13 +153,15 @@ class HyperNetwork(nn.Module):
         personality_texts: list[str],
         user_query_texts: list[str],
         v_prev: torch.Tensor,
+        big5_scores: torch.Tensor | None = None,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """前向传播 - 【方案A】Query-Aware + 【方案D】多层输出
+        """前向传播 - 【方案A】Query-Aware + 【方案D】多层输出 + 【Big Five】5D 分支
 
         Args:
             personality_texts: 人格描述文本列表
             user_query_texts: 当前用户query列表
             v_prev: 上一轮干预向量 (batch, v_dim)
+            big5_scores: Big Five 分数 (batch, 5) [O,C,E,A,N] ∈ [-1,1]，可选
 
         Returns:
             v_t_layers: 当前干预向量 (batch, num_layers, v_dim) 【方案D】多层输出
@@ -221,6 +235,15 @@ class HyperNetwork(nn.Module):
         if self.encoder_projector is not None:
             z_personality = self.encoder_projector(z_personality)
             z_query = self.encoder_projector(z_query)
+
+        # 【Big Five】将 5D 结构化信号融合到 personality embedding
+        if big5_scores is not None:
+            big5 = big5_scores.float().to(target_device)       # (batch, 5)
+            z_big5 = self.big5_projector(big5)                  # (batch, v_dim)
+            # 自适应门控：决定 big5 信号的权重
+            gate_in = torch.cat([z_personality, big5], dim=-1)  # (batch, v_dim+5)
+            beta = self.big5_gate(gate_in)                      # (batch, 1)
+            z_personality = (1 - beta) * z_personality + beta * z_big5
 
         # 【方案A】Query-aware gate fusion
         # alpha 越大 → 越依赖 personality；alpha 越小 → 越依赖 query
