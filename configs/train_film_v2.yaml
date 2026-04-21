@@ -14,8 +14,8 @@ base_model: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
 
 data:
   tokenizer: /home/kemove/Desktop/PersonaSteer/Qwen/Qwen3-4B
-  train_path: data/big5_cross_persona/train.jsonl
-  eval_path: data/big5_cross_persona/train.jsonl
+  train_path: data/big5_cross_persona/train_combined.jsonl
+  eval_path: data/big5_cross_persona/train_combined.jsonl
   max_turns: 1
   batch_size: 4
   num_workers: 2
