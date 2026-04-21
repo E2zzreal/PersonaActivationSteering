@@ -46,8 +46,8 @@ training:
   weight_decay: 0.01
   max_grad_norm: 1.0
   sft_weight: 1.0
-  v_norm_weight: 0.1
-  v_norm_target: 5.0
+  v_norm_weight: 0.01
+  v_norm_target: 10.0
   warmup_steps: 20
   use_amp: true
   use_dual_loss: false

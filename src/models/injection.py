@@ -272,22 +272,29 @@ class SteeringInjection(nn.Module):
 
 
 class FiLMInjectFunction(torch.autograd.Function):
-    """Residual FiLM 注入：断开 backbone 梯度。
+    """Residual FiLM 注入：断开 backbone 权重梯度，但保留层间梯度链。
 
     Forward: h' = h + Δγ ⊙ h + β = (1+Δγ)⊙h + β
-    Backward: 梯度只回传给 Δγ 和 β（HyperNetwork），不回传给 h（backbone）。
+    Backward:
+      - grad_h = grad_output ⊙ (1+Δγ)  ← 保留，使梯度流向上游注入层
+      - grad_Δγ = grad_output ⊙ h
+      - grad_β = grad_output
+    backbone 权重因 requires_grad=False 不会被更新，
+    但 h 的梯度必须流过以连接多个注入层。
     """
     @staticmethod
     def forward(ctx, h, delta_gamma, beta):
-        ctx.save_for_backward(h.detach(), delta_gamma)
+        ctx.save_for_backward(h, delta_gamma)
         return h + delta_gamma * h + beta
 
     @staticmethod
     def backward(ctx, grad_output):
-        h_detached, delta_gamma = ctx.saved_tensors
-        grad_delta_gamma = grad_output * h_detached
+        h, delta_gamma = ctx.saved_tensors
+        # 必须返回 grad_h 以保持 layers 16→17→...→23 的梯度链
+        grad_h = grad_output * (1 + delta_gamma)
+        grad_delta_gamma = grad_output * h.detach()  # detach h 避免二阶梯度
         grad_beta = grad_output
-        return None, grad_delta_gamma, grad_beta
+        return grad_h, grad_delta_gamma, grad_beta
 
 
 class FiLMSteeringInjection(nn.Module):
@@ -318,19 +325,16 @@ class FiLMSteeringInjection(nn.Module):
         self.v_dim = v_dim
         self.layer_dim = layer_dim
 
-        # Δγ projectors: 初始化为零 → 恒等变换起点
+        # Δγ projectors: 零初始化 + tanh 软限制，防止多层连乘爆炸
+        # 不使用 LayerNorm（LN 会将微小输出放大为 std=1 → Δγ 过大 → NaN）
         self.film_gamma_projectors = nn.ModuleList([
-            nn.Sequential(
-                nn.Linear(v_dim, layer_dim),
-                nn.LayerNorm(layer_dim),
-            ) for _ in inject_layers
+            nn.Linear(v_dim, layer_dim) for _ in inject_layers
         ])
 
-        # β projectors: 初始化为零 → 无偏移起点
+        # β projectors: 加法偏移，风险较低，保留 SiLU
         self.film_beta_projectors = nn.ModuleList([
             nn.Sequential(
                 nn.Linear(v_dim, layer_dim),
-                nn.LayerNorm(layer_dim),
                 nn.SiLU(),
                 nn.Dropout(dropout),
             ) for _ in inject_layers
@@ -338,11 +342,15 @@ class FiLMSteeringInjection(nn.Module):
 
         # 零初始化：保证训练起点为恒等变换
         for proj in self.film_gamma_projectors:
-            nn.init.zeros_(proj[0].weight)
-            nn.init.zeros_(proj[0].bias)
+            nn.init.zeros_(proj.weight)
+            nn.init.zeros_(proj.bias)
         for proj in self.film_beta_projectors:
             nn.init.zeros_(proj[0].weight)
             nn.init.zeros_(proj[0].bias)
+
+        # Δγ 缩放因子：tanh 输出 ∈ [-1,1] × gamma_scale → Δγ ∈ [-0.1, 0.1]
+        # (1+Δγ) ∈ [0.9, 1.1]，8 层连乘最大 1.1^8 ≈ 2.14，安全
+        self.gamma_scale = 0.1
 
         # 存储当前注入向量
         self.current_v_t: Optional[torch.Tensor] = None
@@ -381,9 +389,10 @@ class FiLMSteeringInjection(nn.Module):
         else:
             v_t_layer = self.current_v_t  # (batch, v_dim)
 
-        # 生成 Δγ 和 β
-        delta_gamma = self.film_gamma_projectors[layer_idx](v_t_layer)  # (batch, layer_dim)
-        beta = self.film_beta_projectors[layer_idx](v_t_layer)          # (batch, layer_dim)
+        # 生成 Δγ（tanh 限制 + 缩放）和 β
+        raw_gamma = self.film_gamma_projectors[layer_idx](v_t_layer)       # (batch, layer_dim)
+        delta_gamma = torch.tanh(raw_gamma) * self.gamma_scale             # ∈ [-scale, scale]
+        beta = self.film_beta_projectors[layer_idx](v_t_layer)             # (batch, layer_dim)
 
         # 扩展到 seq_len 维度
         delta_gamma = delta_gamma.unsqueeze(1).to(hidden_states.dtype)  # (batch, 1, layer_dim)
@@ -409,11 +418,13 @@ class FiLMSteeringInjection(nn.Module):
                 v_t_layer = self.current_v_t
 
             with torch.no_grad():
-                dg = self.film_gamma_projectors[i](v_t_layer)
+                raw_g = self.film_gamma_projectors[i](v_t_layer)
+                dg = torch.tanh(raw_g) * self.gamma_scale
                 bt = self.film_beta_projectors[i](v_t_layer)
                 stats[f"layer_{i}_gamma_norm"] = dg.norm(dim=-1).mean().item()
+                stats[f"layer_{i}_gamma_max"] = dg.abs().max().item()
                 stats[f"layer_{i}_beta_norm"] = bt.norm(dim=-1).mean().item()
-                stats[f"layer_{i}_gamma_sparsity"] = (dg.abs() < 0.01).float().mean().item()
+                stats[f"layer_{i}_gamma_sparsity"] = (dg.abs() < 0.001).float().mean().item()
 
         return stats
 
