@@ -7,6 +7,7 @@ HyperNetwork 负责从用户当前话语和历史干预向量生成新的干预�
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from typing import Optional, Tuple
 from .components import ResidualMLP
 
@@ -95,10 +96,15 @@ class HyperNetwork(nn.Module):
             nn.Linear(v_dim // 4, v_dim),
         )
         # 自适应权重：控制 big5 信号 vs encoder 信号的比例
+        # 初始化偏向 Big5 信号（bias=+1.0 → sigmoid=0.73），
+        # 因为 encoder 对相似 personality 文本无区分度
         self.big5_gate = nn.Sequential(
             nn.Linear(v_dim + 5, 1),
             nn.Sigmoid(),
         )
+        # 设置 gate 初始偏置，偏向 Big5
+        with torch.no_grad():
+            self.big5_gate[0].bias.fill_(1.0)  # sigmoid(1.0) ≈ 0.73
 
     def encode_text(self, texts: list[str], tokenizer=None) -> torch.Tensor:
         """编码文本为向量
@@ -240,10 +246,13 @@ class HyperNetwork(nn.Module):
         if big5_scores is not None:
             big5 = big5_scores.float().to(target_device)       # (batch, 5)
             z_big5 = self.big5_projector(big5)                  # (batch, v_dim)
-            # 自适应门控：决定 big5 信号的权重
-            gate_in = torch.cat([z_personality, big5], dim=-1)  # (batch, v_dim+5)
+            # 归一化后融合：消除 encoder (norm~65) vs big5 (norm~4.5) 的尺度失衡
+            z_personality_norm = F.normalize(z_personality, dim=-1)
+            z_big5_norm = F.normalize(z_big5, dim=-1)
+            # 自适应门控（初始偏向 Big5 信号）
+            gate_in = torch.cat([z_personality_norm, big5], dim=-1)  # 用归一化后的作为 gate 输入
             beta = self.big5_gate(gate_in)                      # (batch, 1)
-            z_personality = (1 - beta) * z_personality + beta * z_big5
+            z_personality = (1 - beta) * z_personality_norm + beta * z_big5_norm
 
         # 【方案A】Query-aware gate fusion
         # alpha 越大 → 越依赖 personality；alpha 越小 → 越依赖 query
