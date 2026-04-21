@@ -331,13 +331,9 @@ class FiLMSteeringInjection(nn.Module):
             nn.Linear(v_dim, layer_dim) for _ in inject_layers
         ])
 
-        # β projectors: 加法偏移，风险较低，保留 SiLU
+        # β projectors: 加法偏移，加 tanh 软限制防止过大
         self.film_beta_projectors = nn.ModuleList([
-            nn.Sequential(
-                nn.Linear(v_dim, layer_dim),
-                nn.SiLU(),
-                nn.Dropout(dropout),
-            ) for _ in inject_layers
+            nn.Linear(v_dim, layer_dim) for _ in inject_layers
         ])
 
         # 零初始化：保证训练起点为恒等变换
@@ -345,12 +341,14 @@ class FiLMSteeringInjection(nn.Module):
             nn.init.zeros_(proj.weight)
             nn.init.zeros_(proj.bias)
         for proj in self.film_beta_projectors:
-            nn.init.zeros_(proj[0].weight)
-            nn.init.zeros_(proj[0].bias)
+            nn.init.zeros_(proj.weight)
+            nn.init.zeros_(proj.bias)
 
-        # Δγ 缩放因子：tanh 输出 ∈ [-1,1] × gamma_scale → Δγ ∈ [-0.1, 0.1]
-        # (1+Δγ) ∈ [0.9, 1.1]，8 层连乘最大 1.1^8 ≈ 2.14，安全
-        self.gamma_scale = 0.1
+        # 缩放因子：tanh 输出 ∈ [-1,1] × scale
+        # gamma: Δγ ∈ [-0.1, 0.1], (1+Δγ)^8 ∈ [0.43, 2.14]
+        # beta: β ∈ [-1.0, 1.0], 相比 hidden states norm ~100 是合理幅度
+        self.gamma_scale = 0.05
+        self.beta_scale = 0.1
 
         # 存储当前注入向量
         self.current_v_t: Optional[torch.Tensor] = None
@@ -389,10 +387,11 @@ class FiLMSteeringInjection(nn.Module):
         else:
             v_t_layer = self.current_v_t  # (batch, v_dim)
 
-        # 生成 Δγ（tanh 限制 + 缩放）和 β
+        # 生成 Δγ（tanh 限制 + 缩放）和 β（tanh 限制 + 缩放）
         raw_gamma = self.film_gamma_projectors[layer_idx](v_t_layer)       # (batch, layer_dim)
-        delta_gamma = torch.tanh(raw_gamma) * self.gamma_scale             # ∈ [-scale, scale]
-        beta = self.film_beta_projectors[layer_idx](v_t_layer)             # (batch, layer_dim)
+        delta_gamma = torch.tanh(raw_gamma) * self.gamma_scale             # ∈ [-0.1, 0.1]
+        raw_beta = self.film_beta_projectors[layer_idx](v_t_layer)         # (batch, layer_dim)
+        beta = torch.tanh(raw_beta) * self.beta_scale                      # ∈ [-1.0, 1.0]
 
         # 扩展到 seq_len 维度
         delta_gamma = delta_gamma.unsqueeze(1).to(hidden_states.dtype)  # (batch, 1, layer_dim)
@@ -420,10 +419,12 @@ class FiLMSteeringInjection(nn.Module):
             with torch.no_grad():
                 raw_g = self.film_gamma_projectors[i](v_t_layer)
                 dg = torch.tanh(raw_g) * self.gamma_scale
-                bt = self.film_beta_projectors[i](v_t_layer)
+                raw_b = self.film_beta_projectors[i](v_t_layer)
+                bt = torch.tanh(raw_b) * self.beta_scale
                 stats[f"layer_{i}_gamma_norm"] = dg.norm(dim=-1).mean().item()
                 stats[f"layer_{i}_gamma_max"] = dg.abs().max().item()
                 stats[f"layer_{i}_beta_norm"] = bt.norm(dim=-1).mean().item()
+                stats[f"layer_{i}_beta_max"] = bt.abs().max().item()
                 stats[f"layer_{i}_gamma_sparsity"] = (dg.abs() < 0.001).float().mean().item()
 
         return stats

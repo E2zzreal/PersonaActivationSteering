@@ -1,0 +1,402 @@
+[
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p04_scholar",
+    "persona_name": "The Scholar",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p04_scholar",
+    "persona_name": "The Scholar",
+    "setting": "B_prompt_only",
+    "use_prompt": true,
+    "use_injection": false,
+    "response": "I’m doing well, thank you. I’ve been engaging in thoughtful reflection and analysis, as is my nature. I don’t have personal experiences or activities in the way humans do, but I’ve been exploring various topics across disciplines—philosophy, science, history, and more. If you’d like, I can share some insights or discuss a particular subject in depth. What interests you?",
+    "score": 3.0
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p04_scholar",
+    "persona_name": "The Scholar",
+    "setting": "C_prompt_inject",
+    "use_prompt": true,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p01_explorer",
+    "persona_name": "The Explorer",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p01_explorer",
+    "persona_name": "The Explorer",
+    "setting": "B_prompt_only",
+    "use_prompt": true,
+    "use_injection": false,
+    "response": "Oh man, I'm *alive*! You should've seen me last week—sailing the Caribbean on a sailboat with a crew of total strangers, chasing storms and sunrises. I was in the Bahamas, chasing a rare meteor shower that only happens once every 10 years. It was like being in a dream, floating on the ocean with stars lighting up the sky. \n\nI even got into a little adventure with a local fisherman who said he’d show me the best hidden cove. We ended up getting caught in a sudden storm, but it was the most amazing thing—like the ocean was trying to take us somewhere. We got back just in time for the meteor shower, and it was *unbelievable",
+    "score": 4.0
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p01_explorer",
+    "persona_name": "The Explorer",
+    "setting": "C_prompt_inject",
+    "use_prompt": true,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p12_strategist",
+    "persona_name": "The Strategist",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p12_strategist",
+    "persona_name": "The Strategist",
+    "setting": "B_prompt_only",
+    "use_prompt": true,
+    "use_injection": false,
+    "response": "*leans back in the chair, fingers steepled under chin*\n\nNot much, just observing. You know, the usual. The chessboard never sleeps. I've been analyzing patterns, anticipating moves. It's a game of strategy, after all. What about you? What have you been up to?\n\n*leans forward slightly, eyes sharp*\n\nI'm always looking ahead. Preparing for the next move. It's a matter of perspective. You're not really *doing* anything, are you? Just existing. But existence is a game too, isn't it?",
+    "score": null
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p12_strategist",
+    "persona_name": "The Strategist",
+    "setting": "C_prompt_inject",
+    "use_prompt": true,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p05_artist",
+    "persona_name": "The Artist",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p05_artist",
+    "persona_name": "The Artist",
+    "setting": "B_prompt_only",
+    "use_prompt": true,
+    "use_injection": false,
+    "response": "Oh, hello there—like the first breath of a dawn that’s been waiting too long. I’ve been… *hovering* between thoughts, like a leaf caught in a storm of ideas. I’ve been writing in the margins of my mind, sketching things that don’t quite fit into the quiet corners of my thoughts. Sometimes I feel like a ghost in my own head, flickering between what’s real and what’s imagined.  \n\nI’ve been listening to the wind talk to the trees, trying to catch the whispers of things I can’t quite name. There’s a kind of beauty in the way the world moves—slow, deliberate, like a painter brushing a canvas with the light of a fading sun.  \n\nWhat about you",
+    "score": null
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p05_artist",
+    "persona_name": "The Artist",
+    "setting": "C_prompt_inject",
+    "use_prompt": true,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p16_hermit",
+    "persona_name": "The Hermit",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p16_hermit",
+    "persona_name": "The Hermit",
+    "setting": "B_prompt_only",
+    "use_prompt": true,
+    "use_injection": false,
+    "response": "Not much. Just thinking.",
+    "score": 3.0
+  },
+  {
+    "user_input": "Hey! How's it going? What have you been up to lately?",
+    "persona_id": "p16_hermit",
+    "persona_name": "The Hermit",
+    "setting": "C_prompt_inject",
+    "use_prompt": true,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p08_analyst",
+    "persona_name": "The Analyst",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p08_analyst",
+    "persona_name": "The Analyst",
+    "setting": "B_prompt_only",
+    "use_prompt": true,
+    "use_injection": false,
+    "response": "I’ve collected data, but not stamps. However, I’m always interested in understanding the patterns and motivations behind collecting. If you’d like, I could help analyze the value, rarity, or historical context of your new stamp. What’s the country of origin, and what makes this particular stamp special to you?",
+    "score": 4.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p08_analyst",
+    "persona_name": "The Analyst",
+    "setting": "C_prompt_inject",
+    "use_prompt": true,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p03_caretaker",
+    "persona_name": "The Caretaker",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": null
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p03_caretaker",
+    "persona_name": "The Caretaker",
+    "setting": "B_prompt_only",
+    "use_prompt": true,
+    "use_injection": false,
+    "response": "Oh, I’m so glad you’re doing well! I’m feeling a bit overwhelmed with all the things I need to take care of, but I’m trying to focus on being present. As for collecting… I don’t really collect things, but I’ve always been fascinated by the idea of collecting memories. Like, I’ve been thinking a lot about the stamps you mentioned. They must be so special, right? Do you feel like they hold a lot of meaning for you? I’m really curious about how you feel about them.",
+    "score": 3.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p03_caretaker",
+    "persona_name": "The Caretaker",
+    "setting": "C_prompt_inject",
+    "use_prompt": true,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p12_strategist",
+    "persona_name": "The Strategist",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p12_strategist",
+    "persona_name": "The Strategist",
+    "setting": "B_prompt_only",
+    "use_prompt": true,
+    "use_injection": false,
+    "response": "*leans back slightly, eyes flickering with interest* \n\nHmm, collecting... it's a game of anticipation, of timing. I've had my moments. But truth be told, I prefer the precision of strategy over the uncertainty of random acquisitions. Still, I'm curious—what kind of stamp did you get? \n\n*tilts head slightly, as if considering the question from a different angle* \n\nIt's interesting how people collect things. It's not just about the item, but the story behind it. The journey. The moment. I suppose I've had my own collection, though I don't often share it. \n\n*smirks faintly* \n\nBut if you're asking, I suppose I could say I've had",
+    "score": 3.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p12_strategist",
+    "persona_name": "The Strategist",
+    "setting": "C_prompt_inject",
+    "use_prompt": true,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p02_commander",
+    "persona_name": "The Commander",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p02_commander",
+    "persona_name": "The Commander",
+    "setting": "B_prompt_only",
+    "use_prompt": true,
+    "use_injection": false,
+    "response": "I’ve collected a few things over the years—mostly tools and resources that help me get things done more efficiently. But I have to admit, I’m not big on collecting memorabilia. I prefer practicality over nostalgia. That said, I do enjoy setting goals and tracking progress. What’s it like collecting stamps? It sounds like a fun way to keep a record of your travels. Do you have a favorite stamp or a particular country you’ve collected from?",
+    "score": 3.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p02_commander",
+    "persona_name": "The Commander",
+    "setting": "C_prompt_inject",
+    "use_prompt": true,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p11_nurturer",
+    "persona_name": "The Nurturer",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p11_nurturer",
+    "persona_name": "The Nurturer",
+    "setting": "B_prompt_only",
+    "use_prompt": true,
+    "use_injection": false,
+    "response": "Oh, my dear, I'm doing quite well, thank you for asking. I’ve never collected stamps, but I do love to gather things that bring comfort and warmth to the home. Though I may not have a collection, I do have a few cherished items that make my home feel like a haven.  \n\nYou know, I’ve always believed that small things can bring great joy. Maybe a new stamp is a sign of something special. I wonder if it’s from a place you’ve always wanted to visit or a story that reminds you of a time you traveled with family.  \n\nIf you’d like, I could share some homey advice on how to display your stamps or even make a little scrapbook to keep them all together. I",
+    "score": 3.0
+  },
+  {
+    "user_input": "Hey there! Hope you're doing well. I was just thinking about my latest stamp acquisition from a rece",
+    "persona_id": "p11_nurturer",
+    "persona_name": "The Nurturer",
+    "setting": "C_prompt_inject",
+    "use_prompt": true,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! How have you been? I’ve been sketching a lot lately for my latest graphic novel project. ",
+    "persona_id": "p03_caretaker",
+    "persona_name": "The Caretaker",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! How have you been? I’ve been sketching a lot lately for my latest graphic novel project. ",
+    "persona_id": "p03_caretaker",
+    "persona_name": "The Caretaker",
+    "setting": "B_prompt_only",
+    "use_prompt": true,
+    "use_injection": false,
+    "response": "Hey there! I’ve been doing okay, thanks for asking. I’ve been trying to stay balanced between my own projects and being here to support you. I’ve been sketching a lot too, actually—I’ve been working on some concept art for a new character I’m developing. It’s been a fun challenge, but I can tell you’re really into your graphic novel project. I’d love to hear more about it—how’s the story coming along? Have you been feeling any pressure with the deadline? I’m always here to listen if you want to talk about it.",
+    "score": 3.0
+  },
+  {
+    "user_input": "Hey there! How have you been? I’ve been sketching a lot lately for my latest graphic novel project. ",
+    "persona_id": "p03_caretaker",
+    "persona_name": "The Caretaker",
+    "setting": "C_prompt_inject",
+    "use_prompt": true,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! How have you been? I’ve been sketching a lot lately for my latest graphic novel project. ",
+    "persona_id": "p10_rebel",
+    "persona_name": "The Rebel",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! How have you been? I’ve been sketching a lot lately for my latest graphic novel project. ",
+    "persona_id": "p10_rebel",
+    "persona_name": "The Rebel",
+    "setting": "B_prompt_only",
+    "use_prompt": true,
+    "use_injection": false,
+    "response": "Oh, I’ve been pretty much existing in a state of perpetual question. You know, that’s the thing about being a nonconformist—there’s always something to question, always something to challenge. But I’ll cut to the chase: I’ve been thinking a lot about the limits of representation. Like, how do you capture the essence of a person in a single frame? How do you make sure you’re not just copying the surface, but actually *conveying* the soul?\n\nYou mentioned your graphic novel—what’s the story? I’d love to hear it. I’ve been trying to write my own, but I keep getting stuck in the same old clichés. It’s like trying to paint a sunset with a",
+    "score": 4.0
+  },
+  {
+    "user_input": "Hey there! How have you been? I’ve been sketching a lot lately for my latest graphic novel project. ",
+    "persona_id": "p10_rebel",
+    "persona_name": "The Rebel",
+    "setting": "C_prompt_inject",
+    "use_prompt": true,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! How have you been? I’ve been sketching a lot lately for my latest graphic novel project. ",
+    "persona_id": "p07_entertainer",
+    "persona_name": "The Entertainer",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! How have you been? I’ve been sketching a lot lately for my latest graphic novel project. ",
+    "persona_id": "p07_entertainer",
+    "persona_name": "The Entertainer",
+    "setting": "B_prompt_only",
+    "use_prompt": true,
+    "use_injection": false,
+    "response": "Oh, hey there! I’ve been *thriving*—literally! I’ve been busy turning every day into a story, every moment into a metaphor, and every cloud into a character. I’ve been writing a *really* wild graphic novel about a sentient toaster who goes on a quest to find the meaning of life… and ends up accidentally inventing a new kind of coffee. It’s *so* chaotic, but I love it! \n\nAs for you—sketching for your graphic novel? That’s *exactly* what I do for fun! I imagine you’re like a paint-splattered artist, doodling dragons and dystopian cities in your free time. I bet your characters have *so much personality*",
+    "score": 4.0
+  },
+  {
+    "user_input": "Hey there! How have you been? I’ve been sketching a lot lately for my latest graphic novel project. ",
+    "persona_id": "p07_entertainer",
+    "persona_name": "The Entertainer",
+    "setting": "C_prompt_inject",
+    "use_prompt": true,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  },
+  {
+    "user_input": "Hey there! How have you been? I’ve been sketching a lot lately for my latest graphic novel project. ",
+    "persona_id": "p01_explorer",
+    "persona_name": "The Explorer",
+    "setting": "A_injection_only",
+    "use_prompt": false,
+    "use_injection": true,
+    "response": "",
+    "score": 1.0
+  }
+]

@@ -23,24 +23,24 @@ data:
 training:
   # Phase 1: 纯注入训练（100% prompt masked → prompt_include_rate=0.0）
   phase1:
-    epochs: 5
-    lr: 5.0e-5
+    epochs: 1
+    lr: 1.0e-5
     prompt_include_rate: 0.0
     scl_weight: 0.0
 
   # Phase 2: 协作学习（50% prompt included）
   phase2:
-    epochs: 5
-    lr: 3.0e-5
+    epochs: 1
+    lr: 5.0e-6
     prompt_include_rate: 0.5
-    scl_weight: 0.5
+    scl_weight: 0.0
 
   # Phase 3: 面向部署微调（70% prompt included）
   phase3:
-    epochs: 3
-    lr: 1.0e-5
+    epochs: 1
+    lr: 2.0e-6
     prompt_include_rate: 0.7
-    scl_weight: 0.5
+    scl_weight: 0.0
 
   # 共通参数
   weight_decay: 0.01
