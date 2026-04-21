@@ -353,7 +353,6 @@ class PersonaSteerModel(nn.Module):
         generated = input_ids.clone()
 
         # 【修复】在token生成循环开始前计算一次v_t，整轮固定不变
-        # 原bug：每个token步骤都重新调用forward+更新v_prev，导致干预向量发散
         with torch.no_grad():
             _, v_t_layers_fixed, _ = self.forward(
                 input_ids=generated,
@@ -364,24 +363,22 @@ class PersonaSteerModel(nn.Module):
             self.injection.set_intervention_vector(v_t_layers_fixed)
 
         with torch.no_grad():
+            past_key_values = None
+
+            # Prefill: 处理完整 prompt，建立 KV cache
+            if self.backbone is not None:
+                prefill_out = self.backbone(
+                    input_ids=generated,
+                    attention_mask=None,
+                    use_cache=True,
+                )
+                past_key_values = prefill_out.past_key_values
+                next_token_logits = prefill_out.logits[:, -1, :] / temperature
+            else:
+                next_token_logits = torch.randn(
+                    generated.size(0), 151936, device=generated.device)
+
             for _ in range(max_new_tokens):
-                # 骨干模型前向传播（hooks已设置好固定的v_t）
-                if self.backbone is not None:
-                    outputs = self.backbone(
-                        input_ids=generated,
-                        attention_mask=None,
-                        use_cache=False,
-                    )
-                    logits = outputs.logits
-                else:
-                    logits = torch.randn(
-                        generated.size(0), generated.size(1), 151936,
-                        device=generated.device,
-                    )
-
-                # 获取下一个 token 的 logits
-                next_token_logits = logits[:, -1, :] / temperature
-
                 # Top-p 采样
                 sorted_logits, sorted_indices = torch.sort(
                     next_token_logits, descending=True
@@ -389,28 +386,21 @@ class PersonaSteerModel(nn.Module):
                 cumulative_probs = torch.cumsum(
                     F.softmax(sorted_logits, dim=-1), dim=-1
                 )
-
-                # 保留概率超过 top_p 的 token
                 sorted_indices_to_remove = cumulative_probs > top_p
                 sorted_indices_to_remove[..., 1:] = (
                     sorted_indices_to_remove[..., :-1].clone()
                 )
                 sorted_indices_to_remove[..., 0] = 0
-
                 indices_to_remove = sorted_indices_to_remove.scatter(
                     1, sorted_indices, sorted_indices_to_remove
                 )
                 next_token_logits[indices_to_remove] = float('-inf')
 
-                # 采样
                 probs = F.softmax(next_token_logits, dim=-1)
                 next_token = torch.multinomial(probs, num_samples=1)
-
                 generated = torch.cat([generated, next_token], dim=1)
 
-                # 遇到 EOS 或 im_end 停止（支持Qwen chat template结束符）
-                # Qwen2.5: eos=151643(<|endoftext|>), im_end=151645
-                # Qwen3: eos=151645(<|im_end|>)
+                # EOS 检查
                 stop_ids = {151643, 151645}
                 if self.backbone is not None and hasattr(self.backbone.config, 'eos_token_id'):
                     eos = self.backbone.config.eos_token_id
@@ -420,6 +410,19 @@ class PersonaSteerModel(nn.Module):
                         stop_ids.add(eos)
                 if next_token.item() in stop_ids:
                     break
+
+                # Decode: 只处理新 token，用 KV cache（v_t 固定，注入一致）
+                if self.backbone is not None:
+                    decode_out = self.backbone(
+                        input_ids=next_token,
+                        past_key_values=past_key_values,
+                        use_cache=True,
+                    )
+                    past_key_values = decode_out.past_key_values
+                    next_token_logits = decode_out.logits[:, -1, :] / temperature
+                else:
+                    next_token_logits = torch.randn(
+                        generated.size(0), 151936, device=generated.device)
 
         return generated, v_t_layers_fixed.mean(dim=1)  # 返回多层向量的平均
 
