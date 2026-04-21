@@ -138,6 +138,7 @@ def create_model(config: dict, device: str = None) -> PersonaSteerModel:
         use_layer_embedding=model_config.get("use_layer_embedding", True),
         gate_init_bias=training_config.get("gate_init_bias", -2.0),
         gate_max=training_config.get("gate_max", 1.0),
+        injection_type=model_config.get("injection_type", "additive"),
     )
 
     # 加载 encoder 和 tokenizer

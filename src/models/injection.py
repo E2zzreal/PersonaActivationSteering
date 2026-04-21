@@ -271,6 +271,157 @@ class SteeringInjection(nn.Module):
         self.current_gate_values = None
 
 
+class FiLMInjectFunction(torch.autograd.Function):
+    """Residual FiLM 注入：断开 backbone 梯度。
+
+    Forward: h' = h + Δγ ⊙ h + β = (1+Δγ)⊙h + β
+    Backward: 梯度只回传给 Δγ 和 β（HyperNetwork），不回传给 h（backbone）。
+    """
+    @staticmethod
+    def forward(ctx, h, delta_gamma, beta):
+        ctx.save_for_backward(h.detach(), delta_gamma)
+        return h + delta_gamma * h + beta
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        h_detached, delta_gamma = ctx.saved_tensors
+        grad_delta_gamma = grad_output * h_detached
+        grad_beta = grad_output
+        return None, grad_delta_gamma, grad_beta
+
+
+class FiLMSteeringInjection(nn.Module):
+    """FiLM Steering 注入模块
+
+    使用 Residual FiLM（Feature-wise Linear Modulation）替代加法注入。
+    h' = h + Δγ(v_t) ⊙ h + β(v_t) = (1 + Δγ) ⊙ h + β
+
+    Δγ 初始化为 0（恒等变换），训练过程中学会调制人格相关特征。
+
+    Args:
+        inject_layers: 注入层索引列表
+        v_dim: 干预向量维度
+        layer_dim: 骨干模型隐藏层维度
+        dropout: Dropout 概率
+    """
+
+    def __init__(
+        self,
+        inject_layers: List[int],
+        v_dim: int = 1024,
+        layer_dim: int = 2560,
+        dropout: float = 0.1,
+    ):
+        super().__init__()
+        self.inject_layers = inject_layers
+        self.num_inject_layers = len(inject_layers)
+        self.v_dim = v_dim
+        self.layer_dim = layer_dim
+
+        # Δγ projectors: 初始化为零 → 恒等变换起点
+        self.film_gamma_projectors = nn.ModuleList([
+            nn.Sequential(
+                nn.Linear(v_dim, layer_dim),
+                nn.LayerNorm(layer_dim),
+            ) for _ in inject_layers
+        ])
+
+        # β projectors: 初始化为零 → 无偏移起点
+        self.film_beta_projectors = nn.ModuleList([
+            nn.Sequential(
+                nn.Linear(v_dim, layer_dim),
+                nn.LayerNorm(layer_dim),
+                nn.SiLU(),
+                nn.Dropout(dropout),
+            ) for _ in inject_layers
+        ])
+
+        # 零初始化：保证训练起点为恒等变换
+        for proj in self.film_gamma_projectors:
+            nn.init.zeros_(proj[0].weight)
+            nn.init.zeros_(proj[0].bias)
+        for proj in self.film_beta_projectors:
+            nn.init.zeros_(proj[0].weight)
+            nn.init.zeros_(proj[0].bias)
+
+        # 存储当前注入向量
+        self.current_v_t: Optional[torch.Tensor] = None
+        self.injection_enabled = True
+
+    def set_intervention_vector(self, v_t: torch.Tensor) -> None:
+        """设置当前干预向量
+
+        Args:
+            v_t: 干预向量 (batch, v_dim) 或 (batch, num_layers, v_dim)
+        """
+        self.current_v_t = v_t
+
+    def inject(
+        self,
+        hidden_states: torch.Tensor,
+        layer_idx: int,
+    ) -> torch.Tensor:
+        """FiLM 注入：h' = h + Δγ ⊙ h + β
+
+        Args:
+            hidden_states: 隐藏状态 (batch, seq_len, layer_dim)
+            layer_idx: 当前层在 inject_layers 中的索引
+
+        Returns:
+            注入后的隐藏状态 (batch, seq_len, layer_dim)
+        """
+        if not self.injection_enabled:
+            return hidden_states
+        if self.current_v_t is None:
+            raise ValueError("Please call set_intervention_vector first")
+
+        # 获取当前层的干预向量
+        if self.current_v_t.dim() == 3:
+            v_t_layer = self.current_v_t[:, layer_idx, :]  # (batch, v_dim)
+        else:
+            v_t_layer = self.current_v_t  # (batch, v_dim)
+
+        # 生成 Δγ 和 β
+        delta_gamma = self.film_gamma_projectors[layer_idx](v_t_layer)  # (batch, layer_dim)
+        beta = self.film_beta_projectors[layer_idx](v_t_layer)          # (batch, layer_dim)
+
+        # 扩展到 seq_len 维度
+        delta_gamma = delta_gamma.unsqueeze(1).to(hidden_states.dtype)  # (batch, 1, layer_dim)
+        beta = beta.unsqueeze(1).to(hidden_states.dtype)                # (batch, 1, layer_dim)
+
+        # FiLM 注入（使用自定义 autograd 断开 backbone 梯度）
+        return FiLMInjectFunction.apply(hidden_states, delta_gamma, beta)
+
+    def get_film_stats(self) -> dict:
+        """获取 FiLM 调制统计，用于诊断
+
+        Returns:
+            包含 Δγ 和 β 统计的字典
+        """
+        if self.current_v_t is None:
+            return {}
+
+        stats = {}
+        for i in range(self.num_inject_layers):
+            if self.current_v_t.dim() == 3:
+                v_t_layer = self.current_v_t[:, i, :]
+            else:
+                v_t_layer = self.current_v_t
+
+            with torch.no_grad():
+                dg = self.film_gamma_projectors[i](v_t_layer)
+                bt = self.film_beta_projectors[i](v_t_layer)
+                stats[f"layer_{i}_gamma_norm"] = dg.norm(dim=-1).mean().item()
+                stats[f"layer_{i}_beta_norm"] = bt.norm(dim=-1).mean().item()
+                stats[f"layer_{i}_gamma_sparsity"] = (dg.abs() < 0.01).float().mean().item()
+
+        return stats
+
+    def reset(self) -> None:
+        """重置当前状态"""
+        self.current_v_t = None
+
+
 class HierarchicalSteeringInjection(nn.Module):
     """层级 Steering 注入
 

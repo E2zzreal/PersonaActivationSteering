@@ -1,13 +1,18 @@
 """
 ALOE 数据集的 PyTorch Dataset
 支持多轮对话加载，最大轮次限制
+支持 Prompt Dropout（控制 system prompt 中是否包含人格描述）
 """
 
 import json
+import random
 from pathlib import Path
 from typing import Any
 
 from torch.utils.data import Dataset
+
+
+GENERIC_SYSTEM_PROMPT = "Please respond to the user naturally."
 
 
 class ALOEDataset(Dataset):
@@ -25,6 +30,10 @@ class ALOEDataset(Dataset):
         data_path: JSONL 数据文件路径
         tokenizer: 分词器对象（支持 enable_thinking 参数）
         max_turns: 最大对话轮次数
+        prompt_include_rate: system prompt 中包含人格描述的概率
+            0.0 = 从不含人格（纯 injection，Phase 1）
+            0.5 = 50% 含人格（Phase 2）
+            0.7 = 70% 含人格（Phase 3）
     """
 
     def __init__(
@@ -32,10 +41,12 @@ class ALOEDataset(Dataset):
         data_path: str | Path,
         tokenizer: Any,
         max_turns: int = 10,
+        prompt_include_rate: float = 0.0,
     ):
         self.data_path = Path(data_path)
         self.tokenizer = tokenizer
         self.max_turns = max_turns
+        self.prompt_include_rate = prompt_include_rate
         self.data = self._load_data()
 
     def _load_data(self) -> list[dict]:
@@ -69,6 +80,11 @@ class ALOEDataset(Dataset):
 
         # 展开对话轮次 (user-assistant 交替)
         conversations = sample.get("conversations", [])
+        personality_desc = sample.get("personality", "")
+
+        # Prompt Dropout: 决定本样本是否在 system prompt 中包含人格描述
+        include_personality_in_prompt = random.random() < self.prompt_include_rate
+
         for i in range(0, len(conversations) - 1, 2):
             if i // 2 >= self.max_turns:
                 break
@@ -86,13 +102,23 @@ class ALOEDataset(Dataset):
             user_content = user_msg["content"]
             asst_content = asst_msg["content"]
 
-            # 使用 chat template 构建完整序列
-            # 【修复】添加 enable_thinking=False 以匹配推理时的行为
-            # 这确保训练数据不包含 thinking 标记，避免模型学习输出思考过程
-            messages = [
+            # 构建 messages：可选地加入 system prompt
+            messages = []
+            if include_personality_in_prompt and personality_desc:
+                messages.append({
+                    "role": "system",
+                    "content": f"/no_think\nPersonality: {personality_desc[:300]}",
+                })
+            elif not include_personality_in_prompt:
+                messages.append({
+                    "role": "system",
+                    "content": f"/no_think\n{GENERIC_SYSTEM_PROMPT}",
+                })
+
+            messages.extend([
                 {"role": "user", "content": user_content},
-                {"role": "assistant", "content": asst_content}
-            ]
+                {"role": "assistant", "content": asst_content},
+            ])
 
             try:
                 full_text = self.tokenizer.apply_chat_template(
@@ -109,15 +135,17 @@ class ALOEDataset(Dataset):
             input_ids = self.tokenizer.encode(full_text, add_special_tokens=False)
 
             # 计算 user 部分长度（用于构建 labels）
+            # 需要包含 system prompt（如果有），以便正确计算 prefix 长度
+            prefix_messages = [m for m in messages if m["role"] != "assistant"]
             try:
                 user_only = self.tokenizer.apply_chat_template(
-                    [{"role": "user", "content": user_content}],
+                    prefix_messages,
                     tokenize=False, add_generation_prompt=True,
                     enable_thinking=False
                 )
             except TypeError:
                 user_only = self.tokenizer.apply_chat_template(
-                    [{"role": "user", "content": user_content}],
+                    prefix_messages,
                     tokenize=False, add_generation_prompt=True
                 )
             user_ids = self.tokenizer.encode(user_only, add_special_tokens=False)

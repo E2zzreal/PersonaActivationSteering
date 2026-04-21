@@ -12,7 +12,7 @@ from dataclasses import dataclass
 import torch.nn.functional as F
 
 from .hyper_network import HyperNetwork
-from .injection import SteeringInjection
+from .injection import SteeringInjection, FiLMSteeringInjection
 from .components import freeze_module, verify_frozen, count_parameters
 
 
@@ -41,6 +41,7 @@ class PersonaSteerConfig:
     gate_init_bias: float = -2.0
     gate_max: float = 1.0
     dropout: float = 0.1
+    injection_type: str = "additive"  # "additive" (旧) 或 "film" (新)
     backbone_model_name: str = "Qwen/Qwen2.5-3B"
     encoder_model_name: str = "Qwen/Qwen2.5-3B"
     vocab_size: int = 151936
@@ -111,16 +112,24 @@ class PersonaSteerModel(nn.Module):
         else:
             self.hyper_network = None
 
-        # 注入模块
-        self.injection = SteeringInjection(
-            inject_layers=config.inject_layers,
-            v_dim=config.v_dim,
-            layer_dim=self.layer_dim,
-            gate_hidden_dim=config.gate_hidden_dim,
-            dropout=config.dropout,
-            gate_init_bias=config.gate_init_bias,
-            gate_max=config.gate_max,
-        )
+        # 注入模块（根据 injection_type 选择）
+        if config.injection_type == "film":
+            self.injection = FiLMSteeringInjection(
+                inject_layers=config.inject_layers,
+                v_dim=config.v_dim,
+                layer_dim=self.layer_dim,
+                dropout=config.dropout,
+            )
+        else:
+            self.injection = SteeringInjection(
+                inject_layers=config.inject_layers,
+                v_dim=config.v_dim,
+                layer_dim=self.layer_dim,
+                gate_hidden_dim=config.gate_hidden_dim,
+                dropout=config.dropout,
+                gate_init_bias=config.gate_init_bias,
+                gate_max=config.gate_max,
+            )
 
         # Hook 句柄列表
         self.hooks: List[Any] = []
@@ -200,15 +209,23 @@ class PersonaSteerModel(nn.Module):
             self.layer_dim = backbone.config.hidden_size
 
         # 重新创建注入模块
-        self.injection = SteeringInjection(
-            inject_layers=self.config.inject_layers,
-            v_dim=self.config.v_dim,
-            layer_dim=self.layer_dim,
-            gate_hidden_dim=self.config.gate_hidden_dim,
-            dropout=self.config.dropout,
-            gate_init_bias=self.config.gate_init_bias,
-            gate_max=self.config.gate_max,
-        )
+        if self.config.injection_type == "film":
+            self.injection = FiLMSteeringInjection(
+                inject_layers=self.config.inject_layers,
+                v_dim=self.config.v_dim,
+                layer_dim=self.layer_dim,
+                dropout=self.config.dropout,
+            )
+        else:
+            self.injection = SteeringInjection(
+                inject_layers=self.config.inject_layers,
+                v_dim=self.config.v_dim,
+                layer_dim=self.layer_dim,
+                gate_hidden_dim=self.config.gate_hidden_dim,
+                dropout=self.config.dropout,
+                gate_init_bias=self.config.gate_init_bias,
+                gate_max=self.config.gate_max,
+            )
 
         # 注册 hooks
         self._register_injection_hooks()
@@ -280,13 +297,11 @@ class PersonaSteerModel(nn.Module):
 
         # Step 2: 设置注入向量（支持多层）
         if self.baseline_mode:
-            # 【V4修复】Baseline模式：将gate设为0，完全禁用注入
-            self.injection.current_gate_values = torch.zeros(
-                v_t_layers.size(0), self.injection.num_inject_layers,
-                device=v_t_layers.device
-            )
+            # Baseline模式：禁用注入
+            self.injection.injection_enabled = False
             self.injection.current_v_t = v_t_layers  # 保留v_t用于记录
         else:
+            self.injection.injection_enabled = True
             self.injection.set_intervention_vector(v_t_layers)
 
         # Step 3: 骨干模型前向传播 (触发 hooks)
@@ -476,6 +491,7 @@ class PersonaSteerModel(nn.Module):
             "num_inject_layers": len(self.config.inject_layers),
             "v_dim": self.config.v_dim,
             "layer_dim": self.layer_dim,
+            "injection_type": self.config.injection_type,
         }
 
 

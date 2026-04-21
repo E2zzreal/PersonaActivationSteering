@@ -117,11 +117,16 @@ class PersonaSteerTrainer:
 
     def _setup_optimizer(self) -> AdamW:
         """配置优化器"""
-        # 阶段1: 仅训练 HyperNetwork
-        # 阶段2: 训练 HyperNetwork + Gate
-        # 阶段3: 全部训练
+        is_film = getattr(self.model.config, 'injection_type', 'additive') == 'film'
 
-        if self.stage == 1:
+        if is_film:
+            # FiLM 模式：训练 HyperNetwork + FiLM projectors（无独立 gate）
+            params = []
+            if self.model.hyper_network is not None:
+                params += [p for p in self.model.hyper_network.parameters() if p.requires_grad]
+            params += [p for p in self.model.injection.parameters() if p.requires_grad]
+            logger.info(f"FiLM mode: Training HyperNetwork + FiLM injection")
+        elif self.stage == 1:
             # 仅训练 HyperNetwork（排除冻结的 encoder）
             if self.model.hyper_network is None:
                 raise ValueError("hyper_network is None. Please ensure encoder is loaded when creating the model.")
@@ -164,7 +169,12 @@ class PersonaSteerTrainer:
         if self.model.hyper_network is None:
             raise ValueError("hyper_network is None. Cannot configure training stage.")
 
-        if self.stage == 1:
+        is_film = getattr(self.model.config, 'injection_type', 'additive') == 'film'
+
+        if is_film:
+            # FiLM 模式：无 gate 需要冻结/解冻，全部组件始终可训练
+            pass
+        elif self.stage == 1:
             # 冻结 gate
             for param in self.model.injection.gate.parameters():
                 param.requires_grad = False
@@ -291,68 +301,83 @@ class PersonaSteerTrainer:
                 # 计算注入后的损失
                 loss_sft = compute_sft_loss(logits, valid_labels)
 
-                # 【V4修复】双loss训练：计算clean loss（无注入）作为基础
-                if self.use_dual_loss:
-                    # 保存当前gate值
-                    saved_gate = self.model.injection.current_gate_values
-                    # 禁用注入
-                    self.model.injection.current_gate_values = torch.zeros(
-                        saved_gate.size(0), self.model.injection.num_inject_layers,
-                        device=saved_gate.device
-                    )
-                    with torch.no_grad():
-                        logits_clean, _, _ = self.model(
-                            input_ids=valid_input_ids,
-                            v_prev=valid_v_prev.detach(),
-                            personality_texts=valid_personalities,
-                            user_query_texts=valid_user_texts,
-                        )
-                    loss_clean = compute_sft_loss(logits_clean, valid_labels).detach()
-                    # 恢复gate
-                    self.model.injection.current_gate_values = saved_gate
-                else:
-                    loss_clean = torch.tensor(0.0, device=self.device)
+                is_film = getattr(self.model.config, 'injection_type', 'additive') == 'film'
 
-                # 只在 Stage 3 计算对比损失（SCL），避免不必要的 GPU 内存开销
-                if self.stage >= 3:
-                    # 注意：不传 user_ids，因为 ALOE 中 user_id 唯一，
-                    # 应该用 personality 字符串匹配（grouped sampler 保证同组）
-                    loss_scl = self.loss_fn.scl(v_t, valid_personalities)
-                else:
-                    loss_scl = torch.tensor(0.0, device=self.device)
-
-                # 组合损失
-                # dual loss: 训练注入后生成不差于clean基线
-                # loss = loss_injected + alpha * relu(loss_injected - loss_clean)
-                # 效果: 最小化注入loss, 同时惩罚注入导致的质量下降
-                if self.use_dual_loss:
-                    alpha = self.injected_loss_weight
-                    degradation_penalty = torch.relu(loss_sft - loss_clean)
-                    loss = loss_sft + alpha * degradation_penalty
-                else:
+                if is_film:
+                    # FiLM 模式：简洁损失 = SFT + SCL + v_norm
                     loss = self.sft_weight * loss_sft
-                if self.stage >= 3:
-                    loss += self.scl_weight * loss_scl
-                    epoch_scl_loss += loss_scl.item()
 
-                # Gate约束正则化（Stage 2及以上）
-                if self.stage >= 2:
-                    loss_gate_reg = self._compute_gate_regularization()
-                    loss += self.gate_reg_weight * loss_gate_reg
+                    # SCL（当配置的 scl_weight > 0 时启用）
+                    if self.scl_weight > 0:
+                        loss_scl = self.loss_fn.scl(v_t, valid_personalities)
+                        loss += self.scl_weight * loss_scl
+                        epoch_scl_loss += loss_scl.item()
 
-                # v_norm正则化（soft constraint）
-                # 惩罚v_norm偏离目标值，避免hard clip破坏方向信息
-                loss_v_norm = ((v_norm - self.v_norm_target) ** 2).mean()
-                loss += self.v_norm_weight * loss_v_norm
+                    # v_norm soft constraint
+                    loss_v_norm = ((v_norm - self.v_norm_target) ** 2).mean()
+                    loss += self.v_norm_weight * loss_v_norm
 
-                # Gate entropy loss（防止 gate 集中在单层，鼓励各层均匀使用）
-                gate_entropy_weight = self.config.get("gate_entropy_weight", 0.01)
-                if gate_entropy_weight > 0 and hasattr(self.model, 'injection'):
-                    loss_gate_entropy = self.model.injection.compute_gate_entropy_loss(v_t)
-                    loss += gate_entropy_weight * loss_gate_entropy
-                    epoch_gate_entropy += loss_gate_entropy.item()
-                else:
                     loss_gate_entropy = torch.tensor(0.0)
+
+                else:
+                    # Legacy additive 模式：保留所有旧逻辑
+
+                    # 【V4修复】双loss训练：计算clean loss（无注入）作为基础
+                    if self.use_dual_loss:
+                        # 保存当前gate值
+                        saved_gate = self.model.injection.current_gate_values
+                        # 禁用注入
+                        self.model.injection.current_gate_values = torch.zeros(
+                            saved_gate.size(0), self.model.injection.num_inject_layers,
+                            device=saved_gate.device
+                        )
+                        with torch.no_grad():
+                            logits_clean, _, _ = self.model(
+                                input_ids=valid_input_ids,
+                                v_prev=valid_v_prev.detach(),
+                                personality_texts=valid_personalities,
+                                user_query_texts=valid_user_texts,
+                            )
+                        loss_clean = compute_sft_loss(logits_clean, valid_labels).detach()
+                        # 恢复gate
+                        self.model.injection.current_gate_values = saved_gate
+                    else:
+                        loss_clean = torch.tensor(0.0, device=self.device)
+
+                    # 只在 Stage 3 计算对比损失（SCL）
+                    if self.stage >= 3:
+                        loss_scl = self.loss_fn.scl(v_t, valid_personalities)
+                    else:
+                        loss_scl = torch.tensor(0.0, device=self.device)
+
+                    # 组合损失
+                    if self.use_dual_loss:
+                        alpha = self.injected_loss_weight
+                        degradation_penalty = torch.relu(loss_sft - loss_clean)
+                        loss = loss_sft + alpha * degradation_penalty
+                    else:
+                        loss = self.sft_weight * loss_sft
+                    if self.stage >= 3:
+                        loss += self.scl_weight * loss_scl
+                        epoch_scl_loss += loss_scl.item()
+
+                    # Gate约束正则化（Stage 2及以上）
+                    if self.stage >= 2:
+                        loss_gate_reg = self._compute_gate_regularization()
+                        loss += self.gate_reg_weight * loss_gate_reg
+
+                    # v_norm正则化
+                    loss_v_norm = ((v_norm - self.v_norm_target) ** 2).mean()
+                    loss += self.v_norm_weight * loss_v_norm
+
+                    # Gate entropy loss
+                    gate_entropy_weight = self.config.get("gate_entropy_weight", 0.01)
+                    if gate_entropy_weight > 0 and hasattr(self.model.injection, 'compute_gate_entropy_loss'):
+                        loss_gate_entropy = self.model.injection.compute_gate_entropy_loss(v_t)
+                        loss += gate_entropy_weight * loss_gate_entropy
+                    else:
+                        loss_gate_entropy = torch.tensor(0.0)
+                    epoch_gate_entropy += loss_gate_entropy.item()
 
                 epoch_sft_loss += loss_sft.item()
                 if self.use_dual_loss:
